@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useToast } from "@/hooks/use-toast"
 
 export function useVoiceRecognition(
@@ -7,6 +7,7 @@ export function useVoiceRecognition(
 ) {
     const [isRecording, setIsRecording] = useState(false)
     const { toast } = useToast()
+    const recognitionRef = useRef<any>(null)
 
     const startRecording = () => {
         if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
@@ -18,42 +19,68 @@ export function useVoiceRecognition(
             return
         }
 
+        // Dừng recording cũ nếu có
+        if (recognitionRef.current) {
+            recognitionRef.current.stop()
+            recognitionRef.current = null
+        }
+
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
         const recognition = new SpeechRecognition()
         recognition.lang = sourceLang === "vi" ? "vi-VN" : `${sourceLang}-${sourceLang.toUpperCase()}`
-        recognition.continuous = false
-        recognition.interimResults = false
+        recognition.continuous = true 
+        recognition.interimResults = true
 
         recognition.onstart = () => {
             setIsRecording(true)
             toast({
                 title: "Đang nghe...",
-                description: "Hãy nói nội dung bạn muốn dịch",
+                description: "Hãy nói nội dung bạn muốn",
             })
         }
 
         recognition.onresult = (event: any) => {
-            const transcript = event.results[0][0].transcript
-            onTranscript(transcript)
-            setIsRecording(false)
+            let fullTranscript = ""
+
+            for (let i = 0; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript
+                fullTranscript += transcript + " "
+            }
+
+            // Cập nhật transcript (bao gồm cả final và interim)
+            if (fullTranscript.trim()) {
+                onTranscript(fullTranscript.trim())
+            }
         }
 
-        recognition.onerror = () => {
+        recognition.onerror = (event: any) => {
             setIsRecording(false)
-            toast({
-                title: "Lỗi",
-                description: "Không thể nhận dạng giọng nói",
-                variant: "destructive",
-            })
+            if (event.error !== "no-speech") {
+                toast({
+                    title: "Lỗi",
+                    description: "Không thể nhận dạng giọng nói",
+                    variant: "destructive",
+                })
+            }
         }
 
         recognition.onend = () => {
             setIsRecording(false)
+            recognitionRef.current = null
         }
 
+        recognitionRef.current = recognition
         recognition.start()
     }
 
-    return { isRecording, startRecording }
+    const stopRecording = () => {
+        if (recognitionRef.current) {
+            recognitionRef.current.stop()
+            recognitionRef.current = null
+            setIsRecording(false)
+        }
+    }
+
+    return { isRecording, startRecording, stopRecording }
 }
 

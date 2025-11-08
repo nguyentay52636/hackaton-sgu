@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
+import { useVoiceRecognition } from "../hooks";
 
 export default function StudentChat() {
     const [messages, setMessages] = useState<
@@ -18,10 +19,22 @@ export default function StudentChat() {
         { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
     ]);
     const [newMsg, setNewMsg] = useState("");
-    const [isRecording, setIsRecording] = useState(false);
     const [elapsedTime, setElapsedTime] = useState(0);
     const chatRef = useRef<HTMLDivElement>(null);
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const [sourceLang, setSourceLang] = useState("vi")
+
+    const { isRecording, startRecording, stopRecording } = useVoiceRecognition(sourceLang, (transcript) => {
+        setNewMsg(transcript);
+    });
+
+    const handleVoiceCall = () => {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    };
 
     useEffect(() => {
         chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
@@ -56,18 +69,6 @@ export default function StudentChat() {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    };
-
-    const handleVoiceCall = () => {
-        if (isRecording) {
-            setIsRecording(false);
-            console.log("Stopped recording, duration:", formatTime(elapsedTime));
-        } else {
-            // Bắt đầu recording
-            setIsRecording(true);
-            setElapsedTime(0);
-            console.log("Started recording");
-        }
     };
 
     const handleSend = () => {
