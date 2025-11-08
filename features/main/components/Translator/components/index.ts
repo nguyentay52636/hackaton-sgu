@@ -1,0 +1,10 @@
+export { LanguageSelector } from "./LanguageSelector"
+export { SourceTextPanel } from "./SourceTextPanel"
+export { TranslationPanel } from "./TranslationPanel"
+export { AlternativesSection } from "./AlternativesSection"
+export { ExamplesSection } from "./ExamplesSection"
+export { TranslateButton } from "./TranslateButton"
+export { TranslatorHeader } from "./TranslatorHeader"
+export { HistoryTab } from "./HistoryTab"
+export { SavedWordsTab } from "./SavedWordsTab"
+
