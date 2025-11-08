@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs"
 import { Languages, Clock, BookOpen } from "lucide-react"
 import {
@@ -39,6 +39,15 @@ export function Translator() {
         setSourceText(transcript)
     })
 
+    const handleTranslationComplete = useCallback((translation: string) => {
+        addToHistory({
+            original: sourceText,
+            translation,
+            fromLang: sourceLang,
+            toLang: targetLang,
+        })
+    }, [sourceText, sourceLang, targetLang, addToHistory])
+
     const {
         translatedText,
         examples,
@@ -46,14 +55,7 @@ export function Translator() {
         isTranslating,
         handleTranslate,
         setTranslatedText,
-    } = useTranslation(sourceText, sourceLang, targetLang, (translation) => {
-        addToHistory({
-            original: sourceText,
-            translation,
-            fromLang: sourceLang,
-            toLang: targetLang,
-        })
-    })
+    } = useTranslation(sourceText, sourceLang, targetLang, handleTranslationComplete)
 
     const swapLanguages = () => {
         const temp = sourceLang

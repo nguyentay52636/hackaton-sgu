@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { Alternative } from "../types"
 import { LANGUAGES } from "../constants"
@@ -14,6 +14,12 @@ export function useTranslation(
     const [alternatives, setAlternatives] = useState<Alternative[]>([])
     const [isTranslating, setIsTranslating] = useState(false)
     const { toast } = useToast()
+    const onTranslationCompleteRef = useRef(onTranslationComplete)
+
+    // Update ref when callback changes
+    useEffect(() => {
+        onTranslationCompleteRef.current = onTranslationComplete
+    }, [onTranslationComplete])
 
     const handleTranslate = useCallback(async (isAuto = false) => {
         if (!sourceText.trim()) return
@@ -39,7 +45,7 @@ export function useTranslation(
             const translateData = await translateResponse.json()
             const translation = translateData.translation || ""
             setTranslatedText(translation)
-            onTranslationComplete?.(translation)
+            onTranslationCompleteRef.current?.(translation)
 
             if (!isAuto) {
                 await new Promise(resolve => setTimeout(resolve, 3000))
@@ -108,7 +114,7 @@ export function useTranslation(
         } finally {
             if (!isAuto) setIsTranslating(false)
         }
-    }, [sourceText, sourceLang, targetLang, onTranslationComplete, toast])
+    }, [sourceText, sourceLang, targetLang, toast])
 
     useEffect(() => {
         if (!sourceText.trim()) {
