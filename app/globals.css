@@ -164,6 +164,10 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    font-size: 80%;
+  }
+
   body {
     @apply bg-background text-foreground;
     transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;

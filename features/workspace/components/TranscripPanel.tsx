@@ -8,9 +8,9 @@ import { AudioRecorder } from "./AudioRecorder"
 import type { TranscriptSegment } from "@/apis/types"
 import { TranscriptSegmentItem } from "./TranscriptSegmentItem"
 import { Download, Save, FileText, Sparkles } from "lucide-react"
-import { useToast } from "@/shared/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { exportToText, downloadFile } from "@/shared/lib/export-utils"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu"
 import { Badge } from "@/shared/ui/badge"
 
 export function TranscripPanel() {

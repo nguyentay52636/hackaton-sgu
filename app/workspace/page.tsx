@@ -1,5 +1,5 @@
-import { WorkspaceLayout } from "@/components/workspace-layout"
+import { Workspace } from "@/features/workspace/Workspace"
 
 export default function WorkspacePage() {
-    return <WorkspaceLayout />
+    return <Workspace />
 }
