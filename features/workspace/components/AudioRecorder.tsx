@@ -1,21 +1,36 @@
-"use client"
+"use client";
 
-import { Button } from "@/shared/ui/button"
-import { Card } from "@/shared/ui/card"
-import { Mic, Square, Pause, Play, Trash2, Upload, Radio, Download } from "lucide-react"
-import { useAudioRecorder } from "@/hooks/use-audio-recorder"
-import { formatTime } from "@/shared/lib/utils"
-import { Alert, AlertDescription } from "@/shared/ui/alert"
-import { downloadAudioAsMP3, downloadAudioOriginal } from "@/shared/lib/audio-utils"
-import { useState } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
+import {
+  Mic,
+  Square,
+  Pause,
+  Play,
+  Trash2,
+  Upload,
+  Radio,
+  Download,
+} from "lucide-react";
+import { useAudioRecorder } from "@/hooks/use-audio-recorder";
+import { formatTime } from "@/shared/lib/utils";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
+import {
+  downloadAudioAsMP3,
+  downloadAudioOriginal,
+} from "@/shared/lib/audio-utils";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface AudioRecorderProps {
-  onTranscribe: (audioBlob: Blob) => void
-  isTranscribing?: boolean
+  onTranscribe: (audioBlob: Blob) => void;
+  isTranscribing?: boolean;
 }
 
-export function AudioRecorder({ onTranscribe, isTranscribing = false }: AudioRecorderProps) {
+export function AudioRecorder({
+  onTranscribe,
+  isTranscribing = false,
+}: AudioRecorderProps) {
   const {
     isRecording,
     isPaused,
@@ -27,50 +42,101 @@ export function AudioRecorder({ onTranscribe, isTranscribing = false }: AudioRec
     pauseRecording,
     resumeRecording,
     clearRecording,
-  } = useAudioRecorder()
-  const [isConverting, setIsConverting] = useState(false)
-  const { toast } = useToast()
+  } = useAudioRecorder();
+  const [isConverting, setIsConverting] = useState(false);
+  const { toast } = useToast();
 
   const handleTranscribe = () => {
-    if (audioBlob) {
-      onTranscribe(audioBlob)
-      clearRecording()
-    }
-  }
+    if (!audioBlob) return;
+
+    setIsConverting(true);
+    (async () => {
+      try {
+        const form = new FormData();
+        form.append(
+          "audio",
+          new File([audioBlob], `recording-${Date.now()}.webm`, {
+            type: audioBlob.type || "audio/webm",
+          })
+        );
+        form.append("userId", "123");
+
+        const res = await fetch("http://localhost:5000/api/stt/whisper", {
+          method: "POST",
+          body: form,
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || res.statusText);
+        }
+
+        let transcript: string;
+        try {
+          const data = await res.json();
+          transcript = data?.text_input ?? JSON.stringify(data);
+          alert(transcript);
+        } catch {
+          transcript = await res.text();
+        }
+
+        toast({
+          title: "Thành công",
+          description: "Đã chuyển đổi sang văn bản",
+        });
+
+        // Gọi callback gốc và xóa bản ghi (giữ hành vi trước đó)
+        onTranscribe(audioBlob);
+        clearRecording();
+
+        console.log("Transcription result:", transcript);
+      } catch (error) {
+        console.error("Transcription error:", error);
+        toast({
+          title: "Lỗi",
+          description: "Không thể chuyển đổi sang văn bản. Vui lòng thử lại.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsConverting(false);
+      }
+    })();
+  };
 
   const handleDownloadMP3 = async () => {
-    if (!audioBlob) return
+    if (!audioBlob) return;
 
-    setIsConverting(true)
+    setIsConverting(true);
     try {
-      await downloadAudioAsMP3(audioBlob, `recording-${Date.now()}.mp3`)
+      await downloadAudioAsMP3(audioBlob, `recording-${Date.now()}.mp3`);
       toast({
         title: "Thành công",
         description: "Đã tải xuống file MP3",
-      })
+      });
     } catch (error) {
-      console.error("Error downloading MP3:", error)
+      console.error("Error downloading MP3:", error);
 
       // Fallback: tải file gốc nếu chuyển đổi MP3 thất bại
       try {
-        downloadAudioOriginal(audioBlob, `recording-${Date.now()}.webm`)
+        downloadAudioOriginal(audioBlob, `recording-${Date.now()}.webm`);
         toast({
           title: "Đã tải xuống",
-          description: "Không thể chuyển đổi sang MP3. Đã tải xuống file gốc (WebM).",
+          description:
+            "Không thể chuyển đổi sang MP3. Đã tải xuống file gốc (WebM).",
           variant: "default",
-        })
+        });
       } catch (fallbackError) {
-        console.error("Error downloading original:", fallbackError)
+        console.error("Error downloading original:", fallbackError);
         toast({
           title: "Lỗi",
           description: "Không thể tải xuống file. Vui lòng thử lại.",
           variant: "destructive",
-        })
+        });
       }
     } finally {
-      setIsConverting(false)
+      setIsConverting(false);
     }
-  }
+  };
 
   return (
     <Card className="p-6 border-2 shadow-lg hover:shadow-xl transition-all duration-300 animate-slide-up">
@@ -180,7 +246,11 @@ export function AudioRecorder({ onTranscribe, isTranscribing = false }: AudioRec
                 {formatTime(recordingTime)}
               </div>
               <div className="text-sm text-muted-foreground font-medium mt-1">
-                {isRecording ? (isPaused ? "Đã tạm dừng" : "Đang ghi âm...") : "Ghi âm hoàn tất"}
+                {isRecording
+                  ? isPaused
+                    ? "Đã tạm dừng"
+                    : "Đang ghi âm..."
+                  : "Ghi âm hoàn tất"}
               </div>
             </div>
           )}
@@ -203,10 +273,12 @@ export function AudioRecorder({ onTranscribe, isTranscribing = false }: AudioRec
               />
             </div>
             <Radio className="w-4 h-4 text-destructive animate-pulse" />
-            <span className="text-sm font-medium text-destructive">Microphone đang hoạt động</span>
+            <span className="text-sm font-medium text-destructive">
+              Microphone đang hoạt động
+            </span>
           </div>
         )}
       </div>
     </Card>
-  )
+  );
 }
