@@ -43,7 +43,6 @@ export function LoginForm() {
       const res = await API.post("/auth/login", { email, password });
 
       if (!res.data.success) {
-        // Sử dụng thông báo từ server nếu có
         throw new Error(res.data.message || "Đăng nhập thất bại");
       }
 

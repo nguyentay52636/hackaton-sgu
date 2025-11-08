@@ -25,9 +25,6 @@ export interface Lesson {
     updatedAt: string
     __v: number
 } 
-export interface User { 
-    
-}
 
 export interface LessonType { 
     type: "video" | "audio" | "document" | "text"
