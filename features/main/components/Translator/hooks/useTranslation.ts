@@ -22,7 +22,19 @@ export function useTranslation(
     }, [onTranslationComplete])
 
     const handleTranslate = useCallback(async (isAuto = false) => {
-        if (!sourceText.trim()) return
+        if (!sourceText.trim()) {
+            setTranslatedText("")
+            return
+        }
+
+        // Nếu cùng ngôn ngữ, không cần dịch
+        if (sourceLang === targetLang) {
+            setTranslatedText(sourceText)
+            onTranslationCompleteRef.current?.(sourceText)
+            setExamples([])
+            setAlternatives([])
+            return
+        }
 
         if (!isAuto) setIsTranslating(true)
 
@@ -119,6 +131,14 @@ export function useTranslation(
     useEffect(() => {
         if (!sourceText.trim()) {
             setTranslatedText("")
+            setExamples([])
+            setAlternatives([])
+            return
+        }
+
+        // Nếu cùng ngôn ngữ, không cần auto translate
+        if (sourceLang === targetLang) {
+            setTranslatedText(sourceText)
             setExamples([])
             setAlternatives([])
             return

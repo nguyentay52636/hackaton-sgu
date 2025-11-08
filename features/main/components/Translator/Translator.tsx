@@ -57,13 +57,25 @@ export function Translator() {
         setTranslatedText,
     } = useTranslation(sourceText, sourceLang, targetLang, handleTranslationComplete)
 
-    const swapLanguages = () => {
-        const temp = sourceLang
+    const swapLanguages = useCallback(() => {
+        // Swap languages
+        const tempLang = sourceLang
         setSourceLang(targetLang)
-        setTargetLang(temp)
-        setSourceText(translatedText)
-        setTranslatedText(sourceText)
-    }
+        setTargetLang(tempLang)
+
+        // Swap texts - nếu có translatedText thì dùng nó làm sourceText mới
+        if (translatedText) {
+            setSourceText(translatedText)
+            // Nếu có sourceText cũ, có thể dùng làm translatedText mới (tùy chọn)
+            // Hoặc để trống để tự động dịch lại
+            setTranslatedText("")
+        } else {
+            // Nếu không có translation, chỉ swap languages
+            const tempText = sourceText
+            setSourceText(translatedText || "")
+            setTranslatedText(tempText || "")
+        }
+    }, [sourceLang, targetLang, sourceText, translatedText])
 
     const handleSaveWord = () => {
         if (!sourceText || !translatedText) return
@@ -109,8 +121,20 @@ export function Translator() {
                         <LanguageSelector
                             sourceLang={sourceLang}
                             targetLang={targetLang}
-                            onSourceLangChange={setSourceLang}
-                            onTargetLangChange={setTargetLang}
+                            onSourceLangChange={(lang) => {
+                                setSourceLang(lang)
+                                // Nếu cùng ngôn ngữ, clear translation
+                                if (lang === targetLang) {
+                                    setTranslatedText("")
+                                }
+                            }}
+                            onTargetLangChange={(lang) => {
+                                setTargetLang(lang)
+                                // Nếu cùng ngôn ngữ, clear translation
+                                if (lang === sourceLang) {
+                                    setTranslatedText("")
+                                }
+                            }}
                             onSwap={swapLanguages}
                         />
 
