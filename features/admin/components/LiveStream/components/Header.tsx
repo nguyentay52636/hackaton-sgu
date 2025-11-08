@@ -15,7 +15,7 @@ export default function Header() {
 
     return (
         <div className="flex items-center justify-between">
-            <div>
+        <div>
                 <h1 className="text-4xl font-bold text-black">
                     {t("Quản lý phát trực tiếp")}
                 </h1>

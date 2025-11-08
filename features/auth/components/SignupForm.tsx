@@ -14,15 +14,15 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"form">) {
   return (
-    <form className={cn("flex flex-col gap-6 w-full max-w-lg mx-auto", className)} {...props}>
-      <FieldGroup className="px-6 py-8">
+    <form className={cn("flex flex-col gap-6 w-full", className)} {...props}>
+      <FieldGroup className="px-6 py-4">
         <div className="flex flex-col items-center gap-3 text-center mb-8">
           <h1 className="text-3xl font-bold">Tạo tài khoản mới</h1>
           <p className="text-muted-foreground text-base text-balance">
             Điền thông tin dưới đây để tạo tài khoản của bạn
           </p>
         </div>
-        <Field className="mb-6">
+        <Field className="mb-4">
           <FieldLabel htmlFor="name" className="text-lg mb-2">Họ và tên</FieldLabel>
           <Input
             id="name"
@@ -32,7 +32,7 @@ export function SignupForm({
             required
           />
         </Field>
-        <Field className="mb-6">
+        <Field className="mb-4">
           <FieldLabel htmlFor="email" className="text-lg mb-2">Email</FieldLabel>
           <Input
             id="email"
@@ -41,36 +41,31 @@ export function SignupForm({
             className="h-12 text-base"
             required
           />
-          <FieldDescription className="text-base">
-            Chúng tôi sẽ sử dụng email này để liên hệ. Chúng tôi sẽ không chia sẻ email của bạn với ai khác.
-          </FieldDescription>
         </Field>
-        <Field className="mb-6">
-          <FieldLabel htmlFor="password" className="text-lg mb-2">Mật khẩu</FieldLabel>
+        <Field className="mb-4">
+          <div className="flex items-center">
+            <FieldLabel htmlFor="password" className="text-lg">Mật khẩu</FieldLabel>
+          </div>
           <Input
             id="password"
             type="password"
             className="h-12 text-base"
             required
           />
-          <FieldDescription className="text-base">
-            Mật khẩu phải có ít nhất 8 ký tự.
-          </FieldDescription>
         </Field>
-        <Field className="mb-6">
-          <FieldLabel htmlFor="confirm-password" className="text-lg mb-2">Xác nhận mật khẩu</FieldLabel>
+        <Field className="mb-4">
+          <div className="flex items-center">
+            <FieldLabel htmlFor="confirm-password" className="text-lg">Xác nhận mật khẩu</FieldLabel>
+          </div>
           <Input
             id="confirm-password"
             type="password"
             className="h-12 text-base"
             required
           />
-          <FieldDescription className="text-base">
-            Vui lòng xác nhận mật khẩu của bạn.
-          </FieldDescription>
         </Field>
         <Field className="mb-6">
-          <Button type="submit" className="w-full h-12 text-lg font-semibold">
+          <Button type="submit" className="w-full h-12 text-lg font-semibold cursor-pointer">
             Tạo tài khoản
           </Button>
         </Field>
