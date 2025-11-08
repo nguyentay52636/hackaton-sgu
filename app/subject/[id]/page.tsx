@@ -4,7 +4,7 @@ import { Badge } from "@/shared/ui/badge"
 import { Button } from "@/shared/ui/button"
 import { Progress } from "@/shared/ui/progress"
 import { BookOpen, Clock, CheckCircle, Lock, PlayCircle, ArrowLeft, Video, Headphones, FileText } from "lucide-react"
-import { ApiSubject, ApiSession, LessonStatus, LessonType } from "@/features/Course/types"
+import { ApiSubject, ApiSession, LessonStatus, LessonType } from "@/app/api/types"
 import { transformSubjectToDetail } from "@/features/Course/utils"
 import { mockSubjects, mockSessions } from "@/features/Course/mockData"
 

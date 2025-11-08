@@ -1,4 +1,4 @@
-import { ApiSession, ApiSubject, Lesson, SubjectDetail, SubjectCardData, LessonType, LessonStatus } from "./types"
+import { ApiSession, ApiSubject, Lesson, SubjectDetail, SubjectCardData, LessonType, LessonStatus } from "../../app/api/types"
 
 /**
  * Determine lesson type from resources

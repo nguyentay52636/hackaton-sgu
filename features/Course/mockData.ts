@@ -1,4 +1,4 @@
-import { ApiSubject, ApiSession } from "./types"
+import { ApiSubject, ApiSession } from "../../app/api/types"
 
 // Mock Sessions (Bài học)
 export const mockSessions: ApiSession[] = [
