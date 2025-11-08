@@ -1,53 +1,95 @@
+"use client"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/shared/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card"
 import { SubjectCard } from "./components/SubjectCard"
 import { BookOpen, TrendingUp, Clock, Award, ArrowRight } from "lucide-react"
-import { ApiSubject, ApiSession } from "../../app/api/types"
-import { transformSubjectToCard, calculateCourseStats } from "./utils"
-import { mockSubjects, mockSessions } from "./mockData"
+import { getAllSubjects, Subject } from "@/apis/subjectApi"
 
-interface CourseProps {
-    subjects?: ApiSubject[]
-    sessions?: ApiSession[]
-}
+export default function Course() {
+    const [subjects, setSubjects] = useState<Subject[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
-export default function Course({
-    subjects = mockSubjects,
-    sessions = mockSessions
-}: CourseProps) {
-    // Transform API data to display format
-    const subjectCards = subjects.map(subject => transformSubjectToCard(subject, sessions))
+    useEffect(() => {
+        const fetchSubjects = async () => {
+            try {
+                setLoading(true)
+                const data = await getAllSubjects()
+                if (data) {
+                    setSubjects(data)
+                }
+            } catch (err) {
+                console.error('Error fetching subjects:', err)
+                setError('Không thể tải danh sách môn học')
+            } finally {
+                setLoading(false)
+            }
+        }
 
-    // Calculate statistics from real data
-    const statsData = calculateCourseStats(subjects, sessions)
+        fetchSubjects()
+    }, [])
+
+    // Calculate statistics from subjects
+    const activeSubjects = subjects.filter(s => s.status).length
+    const totalLessons = subjects.reduce((sum, s) => sum + (Array.isArray(s.lessons) ? s.lessons.length : 0), 0)
+    const completedLessons = subjects.filter(s => s.status).reduce((sum, s) => sum + (Array.isArray(s.lessons) ? s.lessons.length : 0), 0)
+    const estimatedHours = (totalLessons * 0.5).toFixed(1)
 
     const stats = [
         {
             title: "Môn học đang học",
-            value: statsData.activeSubjects.toString(),
+            value: activeSubjects.toString(),
             icon: BookOpen,
             trend: "Đang cập nhật",
         },
         {
             title: "Bài học hoàn thành",
-            value: statsData.completedLessons.toString(),
+            value: completedLessons.toString(),
             icon: TrendingUp,
             trend: "Tổng số bài học",
         },
         {
             title: "Giờ học",
-            value: `${statsData.estimatedHours}h`,
+            value: `${estimatedHours}h`,
             icon: Clock,
             trend: "Ước tính",
         },
         {
             title: "Tổng bài học",
-            value: statsData.totalLessons.toString(),
+            value: totalLessons.toString(),
             icon: Award,
             trend: "Tất cả môn học",
         },
     ]
+
+    if (loading) {
+        return (
+            <div className="p-6 space-y-6">
+                <div className="space-y-2">
+                    <p className="text-5xl text-bold">Danh sách môn học</p>
+                </div>
+                <div className="text-center py-8 text-muted-foreground">
+                    Đang tải dữ liệu...
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="p-6 space-y-6">
+                <div className="space-y-2">
+                    <p className="text-5xl text-bold">Danh sách môn học</p>
+                </div>
+                <div className="text-center py-8 text-red-500">
+                    {error}
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="p-6 space-y-6">
             <div className="space-y-2">
@@ -86,9 +128,13 @@ export default function Course({
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {subjectCards.length > 0 ? (
-                        subjectCards.map((subject) => (
-                            <SubjectCard key={subject.id} {...subject} />
+                    {subjects.length > 0 ? (
+                        subjects.map((subject) => (
+                            <SubjectCard
+                                key={subject._id}
+                                {...subject}
+                                progress={subject.status ? 100 : 0}
+                            />
                         ))
                     ) : (
                         <div className="col-span-full text-center py-8 text-muted-foreground">

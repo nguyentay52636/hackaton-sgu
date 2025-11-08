@@ -4,15 +4,11 @@ import { Badge } from "@/shared/ui/badge"
 import { Button } from "@/shared/ui/button"
 import { Progress } from "@/shared/ui/progress"
 import { BookOpen, Clock, CheckCircle, Lock, PlayCircle, ArrowLeft, Video, Headphones, FileText } from "lucide-react"
-import { ApiSubject, ApiSession, LessonStatus, LessonType } from "@/app/api/types"
-import { transformSubjectToDetail } from "@/features/Course/utils"
-import { mockSubjects, mockSessions } from "@/features/Course/mockData"
+import { LessonStatus, LessonType } from "@/app/api/types"
+import { transformSubjectWithApiLessons } from "@/features/Course/utils"
+import { getAllSubjects, Subject } from "@/apis/subjectApi"
+import { getAllLessons, Lesson as ApiLesson } from "@/apis/lessonApi"
 
-interface SubjectDetailPageProps {
-    params: Promise<{ id: string }> | { id: string }
-    subjects?: ApiSubject[]
-    sessions?: ApiSession[]
-}
 
 function LessonStatusIcon({ status }: { status: LessonStatus }) {
     if (status === "completed") return <CheckCircle className="h-5 w-5 text-green-600" />
@@ -70,9 +66,9 @@ export default async function page({
 }) {
     const resolvedParams = await params
 
-    // Using mock data - Replace with actual API call when ready
-    const subjects: ApiSubject[] = mockSubjects
-    const sessions: ApiSession[] = mockSessions
+    // Fetch data from API
+    const subjects: Subject[] = await getAllSubjects()
+    const apiLessons: ApiLesson[] = await getAllLessons()
 
     // Find subject by ID
     const apiSubject = subjects.find((s) => s._id === resolvedParams.id)
@@ -97,7 +93,7 @@ export default async function page({
     }
 
     // Transform API data to display format
-    const subject = transformSubjectToDetail(apiSubject, sessions)
+    const subject = transformSubjectWithApiLessons(apiSubject, apiLessons)
 
     return (
         <div className="p-6 space-y-6">

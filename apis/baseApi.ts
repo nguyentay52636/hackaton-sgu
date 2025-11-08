@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const baseApi = axios.create({
-  baseURL: '/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
 });
 
 if (typeof window !== 'undefined') {
