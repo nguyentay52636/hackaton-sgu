@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Send, MessageCircle, User } from "lucide-react";
+import { Send, MessageCircle, User, Voicemail, Mic } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -15,16 +15,60 @@ export default function StudentChat() {
         { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
         { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
         { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
-
         { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
     ]);
-
     const [newMsg, setNewMsg] = useState("");
+    const [isRecording, setIsRecording] = useState(false);
+    const [elapsedTime, setElapsedTime] = useState(0);
     const chatRef = useRef<HTMLDivElement>(null);
+    const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
     }, [messages]);
+
+    useEffect(() => {
+        if (isRecording) {
+            timerIntervalRef.current = setInterval(() => {
+                setElapsedTime((prev) => prev + 1);
+            }, 1000);
+        } else {
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+                timerIntervalRef.current = null;
+            }
+        }
+
+        return () => {
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+            }
+        };
+    }, [isRecording]);
+
+    useEffect(() => {
+        if (!isRecording) {
+            setElapsedTime(0);
+        }
+    }, [isRecording]);
+
+    const formatTime = (seconds: number): string => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    };
+
+    const handleVoiceCall = () => {
+        if (isRecording) {
+            setIsRecording(false);
+            console.log("Stopped recording, duration:", formatTime(elapsedTime));
+        } else {
+            // Bắt đầu recording
+            setIsRecording(true);
+            setElapsedTime(0);
+            console.log("Started recording");
+        }
+    };
 
     const handleSend = () => {
         if (newMsg.trim().length === 0) return;
@@ -102,27 +146,53 @@ export default function StudentChat() {
                 </div>
 
                 {/* Ô nhập chat */}
-                <div className="flex items-center gap-2 pt-3 border-t">
-                    <Input
-                        placeholder="Nhập bình luận..."
-                        value={newMsg}
-                        onChange={(e) => setNewMsg(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSend();
-                            }
-                        }}
-                        className="flex-1"
-                    />
-                    <Button
-                        onClick={handleSend}
-                        disabled={!newMsg.trim()}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        size="icon"
-                    >
-                        <Send className="h-4 w-4" />
-                    </Button>
+                <div className="flex flex-col gap-2 pt-3 border-t">
+                    {/* Timer hiển thị khi đang recording */}
+                    {isRecording && (
+                        <div className="flex items-center justify-center gap-2 px-3 py-2 bg-destructive/10 border border-destructive/20 rounded-lg">
+                            <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
+                            <span className="text-sm font-mono font-semibold text-destructive">
+                                {formatTime(elapsedTime)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">Đang ghi âm...</span>
+                        </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                        <Input
+                            placeholder="Nhập bình luận..."
+                            value={newMsg}
+                            onChange={(e) => setNewMsg(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSend();
+                                }
+                            }}
+                            className="flex-1"
+                            disabled={isRecording}
+                        />
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick={handleVoiceCall}
+                                className={`${isRecording
+                                    ? "bg-destructive cursor-pointer hover:bg-destructive/90 text-white"
+                                    : "bg-primary cursor-pointer hover:bg-primary/90 text-white"
+                                    } shadow-md hover:shadow-lg transition-all`}
+                                size="icon"
+                            >
+                                <Mic className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                onClick={handleSend}
+                                disabled={!newMsg.trim() || isRecording}
+                                className="bg-primary hover:bg-primary/90 text-white cursor-pointer shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                size="icon"
+                            >
+                                <Send className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             </CardContent>
         </Card>

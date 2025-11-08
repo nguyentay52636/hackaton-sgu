@@ -3,7 +3,7 @@ import { Button } from "@/shared/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card"
 import { SubjectCard } from "./components/SubjectCard"
 import { BookOpen, TrendingUp, Clock, Award, ArrowRight } from "lucide-react"
-import { ApiSubject, ApiSession } from "./types"
+import { ApiSubject, ApiSession } from "../../app/api/types"
 import { transformSubjectToCard, calculateCourseStats } from "./utils"
 import { mockSubjects, mockSessions } from "./mockData"
 

@@ -5,6 +5,128 @@ import { ChatButton, ChatWindow, type Message } from "./components"
 
 export default function Chat() {
     const [isOpen, setIsOpen] = useState(false)
+    const [position, setPosition] = useState(() => {
+        if (typeof window !== "undefined") {
+            return { x: window.innerWidth - 400, y: 20 }
+        }
+        return { x: 20, y: 20 }
+    })
+    const [buttonPosition, setButtonPosition] = useState(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("chatButtonPosition")
+            if (saved) {
+                try {
+                    return JSON.parse(saved)
+                } catch {
+                    return { x: window.innerWidth - 88, y: window.innerHeight - 88 }
+                }
+            }
+            return { x: window.innerWidth - 88, y: window.innerHeight - 88 }
+        }
+        return { x: 20, y: 20 }
+    })
+    const [dragging, setDragging] = useState(false)
+    const [buttonDragging, setButtonDragging] = useState(false)
+    const dragRef = useRef<{ offsetX: number; offsetY: number } | null>(null)
+    const buttonDragRef = useRef<{ offsetX: number; offsetY: number; startX: number; startY: number } | null>(null)
+
+    useEffect(() => {
+        if (isOpen) setUnreadCount(0)
+    }, [isOpen])
+
+    // Lưu vị trí button vào localStorage
+    useEffect(() => {
+        if (typeof window !== "undefined" && buttonPosition) {
+            localStorage.setItem("chatButtonPosition", JSON.stringify(buttonPosition))
+        }
+    }, [buttonPosition])
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        setDragging(true)
+        dragRef.current = {
+            offsetX: e.clientX - position.x,
+            offsetY: e.clientY - position.y,
+        }
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+        if (!dragging || !dragRef.current) return
+        setPosition({
+            x: e.clientX - dragRef.current.offsetX,
+            y: e.clientY - dragRef.current.offsetY,
+        })
+    }
+
+    const handleMouseUp = () => setDragging(false)
+
+    // Button drag handlers
+    const handleButtonMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault()
+        setButtonDragging(true)
+        buttonDragRef.current = {
+            offsetX: e.clientX - buttonPosition.x,
+            offsetY: e.clientY - buttonPosition.y,
+            startX: e.clientX,
+            startY: e.clientY,
+        }
+    }
+
+    const handleButtonMouseMove = (e: MouseEvent) => {
+        if (!buttonDragging || !buttonDragRef.current) return
+
+        const newX = e.clientX - buttonDragRef.current.offsetX
+        const newY = e.clientY - buttonDragRef.current.offsetY
+
+        setButtonPosition({
+            x: newX,
+            y: newY,
+        })
+    }
+
+    const handleButtonMouseUp = (e: MouseEvent) => {
+        if (!buttonDragRef.current) return
+
+        // Kiểm tra xem có phải là drag hay click
+        const deltaX = Math.abs(e.clientX - buttonDragRef.current.startX)
+        const deltaY = Math.abs(e.clientY - buttonDragRef.current.startY)
+        const isDrag = deltaX > 5 || deltaY > 5
+
+        setButtonDragging(false)
+        buttonDragRef.current = null
+
+        // Nếu không phải drag (chỉ click), mở chat
+        if (!isDrag) {
+            setIsOpen(true)
+        }
+    }
+
+    useEffect(() => {
+        if (dragging) {
+            window.addEventListener("mousemove", handleMouseMove)
+            window.addEventListener("mouseup", handleMouseUp)
+        } else {
+            window.removeEventListener("mousemove", handleMouseMove)
+            window.removeEventListener("mouseup", handleMouseUp)
+        }
+        return () => {
+            window.removeEventListener("mousemove", handleMouseMove)
+            window.removeEventListener("mouseup", handleMouseUp)
+        }
+    }, [dragging])
+
+    useEffect(() => {
+        if (buttonDragging) {
+            window.addEventListener("mousemove", handleButtonMouseMove)
+            window.addEventListener("mouseup", handleButtonMouseUp)
+        } else {
+            window.removeEventListener("mousemove", handleButtonMouseMove)
+            window.removeEventListener("mouseup", handleButtonMouseUp)
+        }
+        return () => {
+            window.removeEventListener("mousemove", handleButtonMouseMove)
+            window.removeEventListener("mouseup", handleButtonMouseUp)
+        }
+    }, [buttonDragging])
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "1",
@@ -158,21 +280,37 @@ export default function Chat() {
 
     return (
         <>
-            <ChatButton isOpen={isOpen} unreadCount={unreadCount} onOpen={() => setIsOpen(true)} />
-
-            <ChatWindow
+            <ChatButton
                 isOpen={isOpen}
-                messages={messages}
-                isTyping={isTyping}
-                inputValue={inputValue}
-                onClose={() => setIsOpen(false)}
-                onInputChange={setInputValue}
-                onSendMessage={handleSendMessage}
-                onContactAdmin={handleContactAdmin}
-                onVoiceCall={handleVoiceCall}
-                onVideoCall={handleVideoCall}
-                isInputDisabled={isTyping || isProcessingRef.current}
+                unreadCount={unreadCount}
+                position={buttonPosition}
+                isDragging={buttonDragging}
+                onMouseDown={handleButtonMouseDown}
             />
+
+            {isOpen && (
+                <div
+                    style={{
+                        position: "fixed",
+                        left: position.x,
+                        top: position.y,
+                        zIndex: 9999,
+                        cursor: dragging ? "grabbing" : "grab",
+                    }}
+                    onMouseDown={handleMouseDown}
+                >
+                    <ChatWindow
+                        isOpen={isOpen}
+                        messages={messages}
+                        isTyping={isTyping}
+                        inputValue={inputValue}
+                        onClose={() => setIsOpen(false)}
+                        onInputChange={setInputValue}
+                        onSendMessage={handleSendMessage}
+                        isInputDisabled={isTyping || isProcessingRef.current}
+                    />
+                </div>
+            )}
         </>
     )
 }
