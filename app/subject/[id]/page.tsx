@@ -4,179 +4,15 @@ import { Badge } from "@/shared/ui/badge"
 import { Button } from "@/shared/ui/button"
 import { Progress } from "@/shared/ui/progress"
 import { BookOpen, Clock, CheckCircle, Lock, PlayCircle, ArrowLeft, Video, Headphones, FileText } from "lucide-react"
+import { ApiSubject, ApiSession, LessonStatus, LessonType } from "@/features/Course/types"
+import { transformSubjectToDetail } from "@/features/Course/utils"
+import { mockSubjects, mockSessions } from "@/features/Course/mockData"
 
-type LessonStatus = "locked" | "active" | "completed"
-type LessonType = "video" | "audio" | "document" | "text"
-
-interface Lesson {
-    id: string
-    title: string
-    duration: string
-    status: LessonStatus
-    type: LessonType
-    description?: string
-    resourceUrl?: string
+interface SubjectDetailPageProps {
+    params: Promise<{ id: string }> | { id: string }
+    subjects?: ApiSubject[]
+    sessions?: ApiSession[]
 }
-
-interface SubjectDetail {
-    id: string
-    name: string
-    description: string
-    image: string
-    progress: number
-    status: "active" | "completed"
-    lessons: Lesson[]
-}
-
-const SUBJECTS: SubjectDetail[] = [
-    {
-        id: "1",
-        name: "Lập trình Web nâng cao",
-        description: "Học React, Next.js và các công nghệ web hiện đại.",
-        image: "https://cdn2.fptshop.com.vn/unsafe/800x0/hoc_lap_trinh_web_1_271d0d3190.jpg",
-        progress: 65,
-        status: "active",
-        lessons: [
-            {
-                id: "l1",
-                title: "Giới thiệu khoá học",
-                duration: "10 phút",
-                status: "completed",
-                type: "video",
-                description: "Video giới thiệu tổng quan về khoá học và mục tiêu học tập",
-                resourceUrl: "https://example.com/video/intro.mp4"
-            },
-            {
-                id: "l2",
-                title: "React cơ bản - Lý thuyết",
-                duration: "25 phút",
-                status: "active",
-                type: "document",
-                description: "Tài liệu PDF về các khái niệm cơ bản của React",
-                resourceUrl: "https://example.com/docs/react-basics.pdf"
-            },
-            {
-                id: "l3",
-                title: "Podcast: Quản lý state",
-                duration: "30 phút",
-                status: "active",
-                type: "audio",
-                description: "Audio podcast về các pattern quản lý state trong React",
-                resourceUrl: "https://example.com/audio/state-management.mp3"
-            },
-            {
-                id: "l4",
-                title: "Next.js 15 App Router - Video hướng dẫn",
-                duration: "35 phút",
-                status: "locked",
-                type: "video",
-                description: "Video tutorial chi tiết về App Router trong Next.js 15",
-                resourceUrl: "https://example.com/video/nextjs-app-router.mp4"
-            },
-            {
-                id: "l5",
-                title: "SSR & SSG - Tài liệu tham khảo",
-                duration: "28 phút",
-                status: "locked",
-                type: "text",
-                description: "Bài viết chi tiết về Server-Side Rendering và Static Site Generation",
-                resourceUrl: "https://example.com/articles/ssr-ssg.md"
-            },
-            {
-                id: "l6",
-                title: "Tối ưu hiệu năng - Video demo",
-                duration: "22 phút",
-                status: "locked",
-                type: "video",
-                description: "Video demo các kỹ thuật tối ưu hiệu năng trong Next.js",
-                resourceUrl: "https://example.com/video/performance-optimization.mp4"
-            },
-        ],
-    },
-    {
-        id: "2",
-        name: "Trí tuệ nhân tạo",
-        description: "Khám phá Machine Learning, xây dựng mô hình và đánh giá.",
-        image: "https://cdn2.fptshop.com.vn/unsafe/800x0/hoc_lap_trinh_web_1_271d0d3190.jpg",
-        progress: 40,
-        status: "active",
-        lessons: [
-            {
-                id: "l1",
-                title: "Giới thiệu AI",
-                duration: "12 phút",
-                status: "completed",
-                type: "video",
-                description: "Video giới thiệu về Trí tuệ nhân tạo và ứng dụng",
-                resourceUrl: "https://example.com/video/ai-intro.mp4"
-            },
-            {
-                id: "l2",
-                title: "Hồi quy tuyến tính - Audio bài giảng",
-                duration: "32 phút",
-                status: "active",
-                type: "audio",
-                description: "Audio bài giảng về thuật toán hồi quy tuyến tính",
-                resourceUrl: "https://example.com/audio/linear-regression.mp3"
-            },
-            {
-                id: "l3",
-                title: "Phân loại - Tài liệu PDF",
-                duration: "30 phút",
-                status: "locked",
-                type: "document",
-                description: "Tài liệu PDF về các thuật toán phân loại trong Machine Learning",
-                resourceUrl: "https://example.com/docs/classification.pdf"
-            },
-            {
-                id: "l4",
-                title: "Mạng neural - Video tutorial",
-                duration: "45 phút",
-                status: "locked",
-                type: "video",
-                description: "Video tutorial về kiến trúc và hoạt động của mạng neural",
-                resourceUrl: "https://example.com/video/neural-networks.mp4"
-            },
-        ],
-    },
-    {
-        id: "3",
-        name: "Cơ sở dữ liệu",
-        description: "SQL, NoSQL và thiết kế cơ sở dữ liệu.",
-        image: "https://cdn2.fptshop.com.vn/unsafe/800x0/hoc_lap_trinh_web_1_271d0d3190.jpg",
-        progress: 100,
-        status: "completed",
-        lessons: [
-            {
-                id: "l1",
-                title: "Mô hình dữ liệu",
-                duration: "20 phút",
-                status: "completed",
-                type: "document",
-                description: "Tài liệu về các mô hình dữ liệu quan hệ và phi quan hệ",
-                resourceUrl: "https://example.com/docs/data-models.pdf"
-            },
-            {
-                id: "l2",
-                title: "SQL nâng cao - Video thực hành",
-                duration: "35 phút",
-                status: "completed",
-                type: "video",
-                description: "Video hướng dẫn thực hành các câu lệnh SQL nâng cao",
-                resourceUrl: "https://example.com/video/advanced-sql.mp4"
-            },
-            {
-                id: "l3",
-                title: "NoSQL tổng quan - Bài viết",
-                duration: "25 phút",
-                status: "completed",
-                type: "text",
-                description: "Bài viết tổng quan về các loại cơ sở dữ liệu NoSQL",
-                resourceUrl: "https://example.com/articles/nosql-overview.md"
-            },
-        ],
-    },
-]
 
 function LessonStatusIcon({ status }: { status: LessonStatus }) {
     if (status === "completed") return <CheckCircle className="h-5 w-5 text-green-600" />
@@ -224,11 +60,24 @@ function LessonTypeBadge({ type }: { type: LessonType }) {
     )
 }
 
-export default async function page({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+export default async function page({
+    params
+}: {
+    params: Promise<{ id: string }> | { id: string }
+    // TODO: Add subjects and sessions props when API integration is ready
+    // subjects?: ApiSubject[]
+    // sessions?: ApiSession[]
+}) {
     const resolvedParams = await params
-    const subject = SUBJECTS.find((s) => s.id === resolvedParams.id)
 
-    if (!subject) {
+    // Using mock data - Replace with actual API call when ready
+    const subjects: ApiSubject[] = mockSubjects
+    const sessions: ApiSession[] = mockSessions
+
+    // Find subject by ID
+    const apiSubject = subjects.find((s) => s._id === resolvedParams.id)
+
+    if (!apiSubject) {
         return (
             <div className="p-6 space-y-4">
                 <Link href="/subject" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -246,6 +95,9 @@ export default async function page({ params }: { params: Promise<{ id: string }>
             </div>
         )
     }
+
+    // Transform API data to display format
+    const subject = transformSubjectToDetail(apiSubject, sessions)
 
     return (
         <div className="p-6 space-y-6">

@@ -3,93 +3,51 @@ import { Button } from "@/shared/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card"
 import { SubjectCard } from "./components/SubjectCard"
 import { BookOpen, TrendingUp, Clock, Award, ArrowRight } from "lucide-react"
+import { ApiSubject, ApiSession } from "./types"
+import { transformSubjectToCard, calculateCourseStats } from "./utils"
+import { mockSubjects, mockSessions } from "./mockData"
 
-// Mock data
-const recentSubjects = [
-    {
-        id: "1",
-        name: "Lập trình Web nâng cao",
-        description: "Học React, Next.js và các công nghệ web hiện đại",
-        lessons: 24,
-        status: "active" as const,
-        image: "https://cdn2.fptshop.com.vn/unsafe/800x0/hoc_lap_trinh_web_1_271d0d3190.jpg",
-        progress: 65,
-    },
-    {
-        id: "2",
-        name: "Trí tuệ nhân tạo",
-        description: "Khám phá Machine Learning và Deep Learning",
-        lessons: 18,
-        status: "active" as const,
-        image: "https://cdn2.fptshop.com.vn/unsafe/800x0/hoc_lap_trinh_web_1_271d0d3190.jpg",
-        progress: 40,
-    },
-    {
-        id: "3",
-        name: "Cơ sở dữ liệu",
-        description: "SQL, NoSQL và thiết kế cơ sở dữ liệu",
-        lessons: 20,
-        status: "completed" as const,
-        image: "https://cdn2.fptshop.com.vn/unsafe/800x0/hoc_lap_trinh_web_1_271d0d3190.jpg",
-        progress: 100,
-    },
-    {
-        id: "3",
-        name: "Cơ sở dữ liệu",
-        description: "SQL, NoSQL và thiết kế cơ sở dữ liệu",
-        lessons: 20,
-        status: "completed" as const,
-        image: "https://cdn2.fptshop.com.vn/unsafe/800x0/hoc_lap_trinh_web_1_271d0d3190.jpg",
-        progress: 100,
-    },
-    {
-        id: "3",
-        name: "Cơ sở dữ liệu",
-        description: "SQL, NoSQL và thiết kế cơ sở dữ liệu",
-        lessons: 20,
-        status: "completed" as const,
-        image: "https://cdn2.fptshop.com.vn/unsafe/800x0/hoc_lap_trinh_web_1_271d0d3190.jpg",
-        progress: 100,
-    },
-    {
-        id: "3",
-        name: "Cơ sở dữ liệu",
-        description: "SQL, NoSQL và thiết kế cơ sở dữ liệu",
-        lessons: 20,
-        status: "completed" as const,
-        image: "https://cdn2.fptshop.com.vn/unsafe/800x0/hoc_lap_trinh_web_1_271d0d3190.jpg",
-        progress: 100,
-    },
-]
+interface CourseProps {
+    subjects?: ApiSubject[]
+    sessions?: ApiSession[]
+}
 
-const stats = [
-    {
-        title: "Môn học đang học",
-        value: "5",
-        icon: BookOpen,
-        trend: "+2 từ tháng trước",
-    },
-    {
-        title: "Bài học hoàn thành",
-        value: "127",
-        icon: TrendingUp,
-        trend: "+23 tuần này",
-    },
-    {
-        title: "Giờ học",
-        value: "48.5h",
-        icon: Clock,
-        trend: "+12h tuần này",
-    },
-    {
-        title: "Điểm trung bình",
-        value: "8.5",
-        icon: Award,
-        trend: "+0.3 từ tháng trước",
-    },
-]
+export default function Course({
+    subjects = mockSubjects,
+    sessions = mockSessions
+}: CourseProps) {
+    // Transform API data to display format
+    const subjectCards = subjects.map(subject => transformSubjectToCard(subject, sessions))
 
-export default function Course() {
+    // Calculate statistics from real data
+    const statsData = calculateCourseStats(subjects, sessions)
+
+    const stats = [
+        {
+            title: "Môn học đang học",
+            value: statsData.activeSubjects.toString(),
+            icon: BookOpen,
+            trend: "Đang cập nhật",
+        },
+        {
+            title: "Bài học hoàn thành",
+            value: statsData.completedLessons.toString(),
+            icon: TrendingUp,
+            trend: "Tổng số bài học",
+        },
+        {
+            title: "Giờ học",
+            value: `${statsData.estimatedHours}h`,
+            icon: Clock,
+            trend: "Ước tính",
+        },
+        {
+            title: "Tổng bài học",
+            value: statsData.totalLessons.toString(),
+            icon: Award,
+            trend: "Tất cả môn học",
+        },
+    ]
     return (
         <div className="p-6 space-y-6">
             <div className="space-y-2">
@@ -128,9 +86,15 @@ export default function Course() {
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {recentSubjects.map((subject) => (
-                        <SubjectCard key={subject.id} {...subject} />
-                    ))}
+                    {subjectCards.length > 0 ? (
+                        subjectCards.map((subject) => (
+                            <SubjectCard key={subject.id} {...subject} />
+                        ))
+                    ) : (
+                        <div className="col-span-full text-center py-8 text-muted-foreground">
+                            Chưa có môn học nào. Vui lòng thêm môn học để bắt đầu.
+                        </div>
+                    )}
                 </div>
             </div>
 
