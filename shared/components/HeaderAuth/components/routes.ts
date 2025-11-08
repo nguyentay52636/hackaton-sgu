@@ -8,15 +8,19 @@ import {
   Calendar,
   Shield,
   Factory,
+  Notebook,
+  Brain,
+  Mic,
+  MessageSquare,
 } from "lucide-react"
 
 export const navItems = [
   { href: "/", label: "Trang chủ", icon: Home },
   { href: "/about", label: "Về chúng tôi", icon: Factory },
-  { href: "/explore", label: "Khám phá", icon: Compass },
-  { href: "/map", label: "Bản đồ", icon: MapPin },
-  { href: "/livestream", label: "Livestream", icon: Video },
-  { href: "/preview", label: "AR Preview", icon: Cube },
-  { href: "/events", label: "Sự kiện", icon: Calendar },
+  { href: "/workspace", label: "Không gian làm việc", icon: Notebook },
+  { href: "/notes", label: "Ghi chú học tập", icon: Notebook },
+  { href: "/pronunciation", label: "Luyện phát âm", icon: Mic },
+  { href: "/summary", label: "Tóm tắt thông minh", icon: Brain },
+  { href: "/chat", label: "Dịch thuật", icon: MessageSquare },
 ]
 

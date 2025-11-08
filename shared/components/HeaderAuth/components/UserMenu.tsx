@@ -23,17 +23,17 @@ export function UserMenu() {
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="ghost"
-                    className="relative h-11 w-11 rounded-full hover:ring-2 hover:ring-primary/20 transition-all"
+                    className="relative h-10 w-10 sm:h-11 sm:w-11 rounded-full hover:ring-2 hover:ring-primary/30 transition-all duration-300 hover:scale-105"
                 >
-                    <Avatar className="h-11 w-11 ring-2 ring-border">
+                    <Avatar className="h-10 w-10 sm:h-11 sm:w-11 ring-2 ring-border/50 hover:ring-primary/50 transition-all duration-300">
                         <AvatarImage src="/diverse-user-avatars.png" alt="User" />
-                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-secondary/20 text-primary font-bold text-lg">
+                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-secondary/20 text-primary font-bold text-base sm:text-lg">
                             NV
                         </AvatarFallback>
                     </Avatar>
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64" align="end" forceMount>
+            <DropdownMenuContent className="w-64 shadow-xl border-border/50" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-2 p-2">
                         <p className="text-base font-semibold leading-none">Nguyễn Văn A</p>

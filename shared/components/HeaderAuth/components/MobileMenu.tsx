@@ -29,11 +29,11 @@ export function MobileMenu() {
     return (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="lg:hidden">
-                <Button variant="ghost" size="icon" className="h-11 w-11">
-                    <Menu className="h-6 w-6" />
+                <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-11 sm:w-11 rounded-full hover:bg-accent/50 hover:ring-2 hover:ring-primary/20 transition-all duration-300">
+                    <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px] border-l border-border/50">
                 <nav className="flex flex-col gap-4 mt-8">
                     {navItems.map((item) => {
                         const Icon = item.icon

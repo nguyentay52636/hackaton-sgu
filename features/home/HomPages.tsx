@@ -6,9 +6,9 @@ import FavoriteFoots from './components/FavoriteFoots/FavoriteFoots'
 export default function HomPages() {
     return (
         <>
-            <HeroCarousel />
-            <Weather />
-            <FavoriteFoots />
+            {/* <HeroCarousel /> */}
+            {/* <Weather /> */}
+            {/* <FavoriteFoots /> */}
 
 
         </>

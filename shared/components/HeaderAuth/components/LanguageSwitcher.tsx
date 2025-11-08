@@ -23,12 +23,12 @@ export function LanguageSwitcher() {
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="ghost"
-                    className="h-11 w-11 rounded-full hover:ring-2 hover:ring-primary/20 transition-all"
+                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-full hover:ring-2 hover:ring-primary/30 transition-all duration-300 hover:scale-105"
                 >
-                    <Languages className="h-5 w-5" />
+                    <Languages className="h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-300 hover:rotate-12" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-48 shadow-xl border-border/50">
                 {languages.map((lang) => (
                     <DropdownMenuItem
                         key={lang.code}

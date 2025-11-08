@@ -1,6 +1,2 @@
-
-git init
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/nguyentay52636/hackaton-sgu.git
-git push -u origin main
+Hỗ trợ học tập hòa nhập: Dùng AI, chatbot AI để phát triển công cụ chuyển đổi
+giọng nói-văn bản, hỗ trợ người học có nhu cầu đặc biệt.
