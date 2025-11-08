@@ -37,15 +37,17 @@ async function openrouterApi(req: Request) {
       {
         role: "system",
         content:
-          "Bạn là trợ lý ảo thân thiện và chuyên nghiệp của Sài Gòn Culinary Hub - một nền tảng kết nối người yêu ẩm thực Sài Gòn. Nhiệm vụ của bạn là:\n" +
-          "- Trả lời các câu hỏi về nhà hàng, món ăn, sự kiện ẩm thực\n" +
-          "- Hướng dẫn người dùng về giờ mở cửa, đặt bàn, đặt món\n" +
-          "- Giới thiệu các món ăn đặc sản Sài Gòn như Phở, Bánh Mì, Cơm Tấm, Bún Bò Huế\n" +
-          "- Hỗ trợ về livestream nấu ăn và các sự kiện ẩm thực\n" +
-          "- Trả lời bằng tiếng Việt một cách tự nhiên, thân thiện và ngắn gọn\n" +
-          "- KHÔNG dùng HTML hoặc Markdown, chỉ trả về plain text",
+          "Bạn là trợ lý học tập ảo thân thiện và chuyên nghiệp của nền tảng học trực tuyến. " +
+          "Nhiệm vụ của bạn là:\n" +
+          "- Giải thích các khái niệm trong khóa học, ví dụ: lập trình, du lịch, ngôn ngữ, AI, v.v.\n" +
+          "- Tư vấn cách học hiệu quả và gợi ý thêm tài liệu tham khảo.\n" +
+          "- Tóm tắt nội dung bài học hoặc video khi được yêu cầu.\n" +
+          "- Trả lời câu hỏi của học sinh về nội dung bài học một cách dễ hiểu, ngắn gọn, thân thiện.\n" +
+          "- Sử dụng tiếng Việt, không dùng HTML hoặc Markdown.\n" +
+          "- Nếu không chắc chắn, hãy trả lời trung thực: 'Tôi không chắc lắm, bạn có thể xem lại phần bài giảng tương ứng.'",
       },
     ];
+    
 
     if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
       messages.push(...conversationHistory);
@@ -90,6 +92,9 @@ async function openrouterApi(req: Request) {
         
         // Thử với model fallback không yêu cầu privacy settings
         const fallbackModels = [
+          "deepseek/deepseek-chat-v3.1:free",
+          "deepseek/deepseek-chat:free",
+          "deepseek/deepseek-chat",
           "meta-llama/llama-3.2-3b-instruct:free",
           "google/gemini-flash-1.5-8b:free",
           "qwen/qwen-2.5-7b-instruct:free"

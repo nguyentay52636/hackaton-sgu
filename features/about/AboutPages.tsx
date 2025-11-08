@@ -107,7 +107,7 @@ export function AboutPages() {
                                         key={i}
                                         className="flex flex-col items-center gap-3 p-4 rounded-lg hover:bg-accent transition-colors"
                                     >
-                                        <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center animate-pulse-slow">
+                                        <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary cursor-pointer flex items-center justify-center animate-pulse-slow">
                                             <item.icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
                                         </div>
                                         <span className="text-xs md:text-sm font-medium text-center">{item.label}</span>

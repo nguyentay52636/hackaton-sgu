@@ -1,16 +1,21 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Send } from "lucide-react";
-import { Card, CardContent } from "@/shared/ui/card";
+import { Send, MessageCircle, User } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { Badge } from "@/shared/ui/badge";
 
 export default function StudentChat() {
     const [messages, setMessages] = useState<
         { id: number; user: string; text: string; time: string }[]
     >([
         { id: 1, user: "An", text: "Mọi người xem tới đoạn 3:15 chưa? 😆", time: "18:32" },
+        { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
+        { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
+        { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
+
         { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
     ]);
 
@@ -32,42 +37,90 @@ export default function StudentChat() {
         setNewMsg("");
     };
 
-    return (
-        <Card className="h-full flex flex-col border-l bg-white/70 backdrop-blur-sm">
-            <CardContent className="p-4 flex flex-col flex-1">
-                <h2 className="text-lg font-semibold mb-3">💬 Thảo luận lớp học</h2>
+    const getInitials = (name: string) => {
+        return name.charAt(0).toUpperCase();
+    };
 
-                {/* Danh sách tin nhắn */}
+    return (
+        <Card className="h-full flex flex-col border-l bg-card/80 backdrop-blur-sm shadow-lg">
+            <CardHeader className="pb-3 border-b bg-gradient-to-r from-primary/5 to-primary/10">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <MessageCircle className="h-5 w-5 text-primary" />
+                        <CardTitle className="text-lg font-semibold">Thảo luận lớp học</CardTitle>
+                    </div>
+                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                        {messages.length}
+                    </Badge>
+                </div>
+            </CardHeader>
+
+            <CardContent className="p-4 flex flex-col flex-1 min-h-0">
                 <div
                     ref={chatRef}
-                    className="flex-1 overflow-y-auto space-y-3 mb-3 p-1 scrollbar-thin scrollbar-thumb-gray-300"
+                    className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/30"
                 >
-                    {messages.map((msg) => (
-                        <div
-                            key={msg.id}
-                            className={`max-w-[85%] p-3 rounded-lg ${msg.user === "Bạn"
-                                    ? "ml-auto bg-blue-500 text-white"
-                                    : "bg-gray-100 text-gray-800"
-                                }`}
-                        >
-                            <div className="flex items-center justify-between text-xs opacity-70 mb-1">
-                                <span>{msg.user}</span>
-                                <span>{msg.time}</span>
+                    {messages.map((msg) => {
+                        const isOwn = msg.user === "Bạn";
+                        return (
+                            <div
+                                key={msg.id}
+                                className={`flex items-start gap-3 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
+                            >
+                                {/* Avatar */}
+                                <div
+                                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shadow-sm ${isOwn
+                                        ? "bg-primary text-primary-foreground"
+                                        : "bg-muted text-muted-foreground"
+                                        }`}
+                                >
+                                    {isOwn ? (
+                                        <User className="h-4 w-4" />
+                                    ) : (
+                                        <span>{getInitials(msg.user)}</span>
+                                    )}
+                                </div>
+
+                                {/* Message bubble */}
+                                <div className={`flex flex-col max-w-[75%] ${isOwn ? "items-end" : "items-start"}`}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs font-medium text-muted-foreground">{msg.user}</span>
+                                        <span className="text-xs text-muted-foreground/70">{msg.time}</span>
+                                    </div>
+                                    <div
+                                        className={`px-4 py-2.5 rounded-2xl shadow-sm transition-all ${isOwn
+                                            ? "bg-primary text-primary-foreground rounded-tr-sm"
+                                            : "bg-muted text-foreground rounded-tl-sm"
+                                            }`}
+                                    >
+                                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <p className="text-sm leading-relaxed">{msg.text}</p>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Ô nhập chat */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pt-3 border-t">
                     <Input
                         placeholder="Nhập bình luận..."
                         value={newMsg}
                         onChange={(e) => setNewMsg(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSend();
+                            }
+                        }}
+                        className="flex-1"
                     />
-                    <Button onClick={handleSend} className="bg-blue-500 hover:bg-blue-600">
+                    <Button
+                        onClick={handleSend}
+                        disabled={!newMsg.trim()}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        size="icon"
+                    >
                         <Send className="h-4 w-4" />
                     </Button>
                 </div>
