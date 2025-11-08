@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/shared/components/Footer/ThemeProvider";
 import ClientLayout from "./ClientLayout";
 import WrapTranslationProvider from "@/shared/contexts/TranslationProvider";
+import Chat from "@/shared/components/Chat/Chat";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,7 +26,9 @@ export default function RootLayout({
           <WrapTranslationProvider>
             <ClientLayout>
               {children}
+              <Chat />
             </ClientLayout>
+
           </WrapTranslationProvider>
         </ThemeProvider>
 

@@ -2,10 +2,13 @@
 
 import { Button } from "@/shared/ui/button"
 import { Card } from "@/shared/ui/card"
-import { Mic, Square, Pause, Play, Trash2, Upload, Radio } from "lucide-react"
+import { Mic, Square, Pause, Play, Trash2, Upload, Radio, Download } from "lucide-react"
 import { useAudioRecorder } from "@/hooks/use-audio-recorder"
 import { formatTime } from "@/shared/lib/utils"
 import { Alert, AlertDescription } from "@/shared/ui/alert"
+import { downloadAudioAsMP3, downloadAudioOriginal } from "@/shared/lib/audio-utils"
+import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 interface AudioRecorderProps {
   onTranscribe: (audioBlob: Blob) => void
@@ -25,11 +28,47 @@ export function AudioRecorder({ onTranscribe, isTranscribing = false }: AudioRec
     resumeRecording,
     clearRecording,
   } = useAudioRecorder()
+  const [isConverting, setIsConverting] = useState(false)
+  const { toast } = useToast()
 
   const handleTranscribe = () => {
     if (audioBlob) {
       onTranscribe(audioBlob)
       clearRecording()
+    }
+  }
+
+  const handleDownloadMP3 = async () => {
+    if (!audioBlob) return
+
+    setIsConverting(true)
+    try {
+      await downloadAudioAsMP3(audioBlob, `recording-${Date.now()}.mp3`)
+      toast({
+        title: "Thành công",
+        description: "Đã tải xuống file MP3",
+      })
+    } catch (error) {
+      console.error("Error downloading MP3:", error)
+
+      // Fallback: tải file gốc nếu chuyển đổi MP3 thất bại
+      try {
+        downloadAudioOriginal(audioBlob, `recording-${Date.now()}.webm`)
+        toast({
+          title: "Đã tải xuống",
+          description: "Không thể chuyển đổi sang MP3. Đã tải xuống file gốc (WebM).",
+          variant: "default",
+        })
+      } catch (fallbackError) {
+        console.error("Error downloading original:", fallbackError)
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải xuống file. Vui lòng thử lại.",
+          variant: "destructive",
+        })
+      }
+    } finally {
+      setIsConverting(false)
     }
   }
 
@@ -100,7 +139,7 @@ export function AudioRecorder({ onTranscribe, isTranscribing = false }: AudioRec
                 <Button
                   onClick={handleTranscribe}
                   size="lg"
-                  disabled={isTranscribing}
+                  disabled={isTranscribing || isConverting}
                   className="gap-2 gradient-primary shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50"
                   aria-label="Chuyển đổi sang văn bản"
                 >
@@ -109,12 +148,24 @@ export function AudioRecorder({ onTranscribe, isTranscribing = false }: AudioRec
                 </Button>
 
                 <Button
+                  onClick={handleDownloadMP3}
+                  size="lg"
+                  variant="outline"
+                  disabled={isTranscribing || isConverting}
+                  className="gap-2 hover:bg-primary/10 hover:border-primary hover:text-primary transition-all duration-200 bg-transparent"
+                  aria-label="Tải xuống MP3"
+                >
+                  <Download className="w-5 h-5" />
+                  {isConverting ? "Đang chuyển đổi..." : "Tải MP3"}
+                </Button>
+
+                <Button
                   onClick={clearRecording}
                   size="lg"
                   variant="outline"
                   className="gap-2 hover:bg-destructive/10 hover:border-destructive hover:text-destructive transition-all duration-200 bg-transparent"
                   aria-label="Xóa ghi âm"
-                  disabled={isTranscribing}
+                  disabled={isTranscribing || isConverting}
                 >
                   <Trash2 className="w-5 h-5" />
                   Xóa
