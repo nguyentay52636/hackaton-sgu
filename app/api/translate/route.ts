@@ -141,8 +141,8 @@ async function translateApi(req: Request) {
     const models = [
       process.env.OPENROUTER_MODEL || "microsoft/phi-3-mini-128k-instruct:free",
       ...FALLBACK_MODELS,
-    ];
-
+        ];
+        
     for (const model of models) {
       try {
         const response = await callOpenRouter(
@@ -152,26 +152,26 @@ async function translateApi(req: Request) {
           safeReferer,
           safeTitle
         );
-
+          
         if (response.ok) {
           const data = await response.json();
           const translation = extractTranslation(data);
-          if (translation) {
-            return NextResponse.json({ translation });
-          }
+            if (translation) {
+              return NextResponse.json({ translation });
+            }
         }
       } catch (error) {
         continue;
       }
     }
 
-    return NextResponse.json(
+      return NextResponse.json(
       {
         error:
           "Không thể dịch. Vui lòng kiểm tra API key tại https://openrouter.ai/settings/privacy",
       },
-      { status: 500 }
-    );
+        { status: 500 }
+      );
   } catch (error) {
     return NextResponse.json(
       { error: "Lỗi khi dịch văn bản" },

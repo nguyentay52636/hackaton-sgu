@@ -43,7 +43,7 @@ export interface Note {
 
 export type ChatMode = "simple" | "full"
 
-export type UserRole = "student" | "teacher" | "admin" | "guest"
+
 
 export type AuthMode = "demo" | "simple" | "professional"
 

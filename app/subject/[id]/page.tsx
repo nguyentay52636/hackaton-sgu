@@ -192,9 +192,11 @@ export default async function page({
                                     </p>
                                 </CardContent>
                                 <CardFooter className="pt-0">
-                                    <Button variant={isLocked ? "outline" : "default"} className="w-full" disabled={isLocked}>
-                                        {actionLabel}
-                                    </Button>
+                                    <Link href={`/subject/${resolvedParams.id}/${lesson.id}`} className="w-full">
+                                        <Button variant={isLocked ? "outline" : "default"} className="w-full" disabled={isLocked}>
+                                            {actionLabel}
+                                        </Button>
+                                    </Link>
                                 </CardFooter>
                             </Card>
                         )
