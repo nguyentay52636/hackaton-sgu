@@ -34,7 +34,7 @@
 | **Internationalization** | next-intl, i18next |
 | **Real-time** | Socket.io Client |
 | **Audio Processing** | @jambonz/lamejs, Web Audio API |
-| **Maps** | Leaflet, React Leaflet |
+
 
 ---
 
