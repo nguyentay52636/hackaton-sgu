@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import { HeaderAuth } from "@/shared/components/HeaderAuth/HeaderAuth";
 import { DynamicLang } from "./components/DynamicLang";
 import { AccessibilityProvider } from "@/shared/lib/accessibility-context";
+import { Provider } from "react-redux";
+import store from "@/redux/store";
 
 export default function ClientLayout({
     children,
@@ -15,11 +17,13 @@ export default function ClientLayout({
     const isAdminPage = pathname?.startsWith("/admin") ?? false;
 
     return (
-        <AccessibilityProvider>
-            <DynamicLang />
-            {!isAuthPage && !isAdminPage && <HeaderAuth />}
-            {children}
-            {/* {!isAuthPage && !isAdminPage && <Footer />} */}
-        </AccessibilityProvider>
+        <Provider store={store}>
+            <AccessibilityProvider>
+                <DynamicLang />
+                {!isAuthPage && !isAdminPage && <HeaderAuth />}
+                {children}
+                {/* {!isAuthPage && !isAdminPage && <Footer />} */}
+            </AccessibilityProvider>
+        </Provider>
     );
 }

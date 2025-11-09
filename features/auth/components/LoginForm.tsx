@@ -11,12 +11,18 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Field, FieldGroup, FieldLabel } from "@/shared/ui/field";
-import API from "@/shared/lib/axios";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/redux/store";
+import { loginThunk, selectAuth, clearError } from "@/redux/Slice/authSlice";
 
 export function LoginForm() {
   type ToastVariant = "default" | "destructive" | "success";
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const { isLoading, error, isAuthenticated, user } = useSelector(selectAuth);
 
   const [toastData, setToastData] = React.useState<{
     title: string;
@@ -25,6 +31,14 @@ export function LoginForm() {
   } | null>(null);
 
   const [isOpen, setIsOpen] = React.useState(false);
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (isAuthenticated && user && !isLoading) {
+      router.push("/");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user, isLoading]);
 
   // Helper show toast
   const showToast = (
@@ -36,30 +50,40 @@ export function LoginForm() {
     setIsOpen(true);
   };
 
+  // Clear error when email/password changes
+  React.useEffect(() => {
+    if (error) {
+      dispatch(clearError());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, password]);
+
+  // Handle successful login
+  React.useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      showToast("Thành công", "Đăng nhập thành công!", "success");
+      router.push("/");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isLoading]);
+
+  // Handle login errors
+  React.useEffect(() => {
+    if (error && !isLoading) {
+      showToast("Thất bại", error, "destructive");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error, isLoading]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    dispatch(clearError());
 
     try {
-      const res = await API.post("/auth/login", { email, password });
-
-      if (!res.data.success) {
-        throw new Error(res.data.message || "Đăng nhập thất bại");
-      }
-
-      // ✅ Thành công
-      showToast("Thành công", "Đăng nhập thành công!", "success");
-
-      // Lưu token
-      localStorage.setItem("token", res.data.data.accessToken);
-      console.log("Login success:", res.data);
+      await dispatch(loginThunk({ email, password })).unwrap();
     } catch (err: any) {
+      // Error is handled by useEffect above
       console.log("Login error:", err);
-      // ❌ Hiển thị toast lỗi
-      showToast(
-        "Thất bại",
-        err.message || "Không thể đăng nhập",
-        "destructive"
-      );
     }
   };
 
@@ -104,8 +128,9 @@ export function LoginForm() {
           <Button
             type="submit"
             className="w-full h-12 text-lg font-semibold cursor-pointer"
+            disabled={isLoading}
           >
-            Đăng nhập
+            {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
         </FieldGroup>
       </form>

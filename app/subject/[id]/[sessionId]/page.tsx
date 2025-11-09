@@ -176,7 +176,12 @@ const mockSessions = [
     },
 ];
 
-export default async function LessonDetailPage() {
+export default async function LessonDetailPage({
+    params
+}: {
+    params: Promise<{ id: string; sessionId: string }> | { id: string; sessionId: string }
+}) {
+    const resolvedParams = await params;
     // 👇 Giả lập lấy bài đầu tiên (có thể đổi bằng params hoặc chọn ngẫu nhiên)
     const session = mockSessions[Math.floor(Math.random() * mockSessions.length)];
 
@@ -251,7 +256,10 @@ export default async function LessonDetailPage() {
             </div>
 
             <div className="h-full">
-                <StudentChat />
+                <StudentChat
+                    sessionId={resolvedParams.sessionId}
+                    key={resolvedParams.sessionId} // Force re-render when sessionId changes
+                />
             </div>
         </div>
     );

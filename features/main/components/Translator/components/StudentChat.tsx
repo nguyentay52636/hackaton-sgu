@@ -7,22 +7,30 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
 import { useVoiceRecognition } from "../hooks";
+import { useSessionChat } from "../hooks/useSessionChat";
 
-export default function StudentChat() {
-    const [messages, setMessages] = useState<
-        { id: number; user: string; text: string; time: string }[]
-    >([
-        { id: 1, user: "An", text: "Mọi người xem tới đoạn 3:15 chưa? 😆", time: "18:32" },
-        { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
-        { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
-        { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
-        { id: 2, user: "Hà", text: "Đoạn đó thầy ví dụ rất dễ hiểu.", time: "18:33" },
-    ]);
+interface StudentChatProps {
+    sessionId: string;
+    currentUserId?: string;
+}
+
+export default function StudentChat({ sessionId, currentUserId }: StudentChatProps) {
     const [newMsg, setNewMsg] = useState("");
     const [elapsedTime, setElapsedTime] = useState(0);
     const chatRef = useRef<HTMLDivElement>(null);
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const [sourceLang, setSourceLang] = useState("vi")
+    const [sourceLang, setSourceLang] = useState("vi");
+
+    const {
+        messages,
+        onlineUsers,
+        isConnected,
+        isLoading,
+        sendMessage,
+        sendTyping,
+        typingUsers,
+        error,
+    } = useSessionChat(sessionId);
 
     const { isRecording, startRecording, stopRecording } = useVoiceRecognition(sourceLang, (transcript) => {
         setNewMsg(transcript);
@@ -39,6 +47,21 @@ export default function StudentChat() {
     useEffect(() => {
         chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
     }, [messages]);
+
+    // Get current user ID from localStorage if not provided
+    useEffect(() => {
+        if (!currentUserId && typeof window !== 'undefined') {
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    // currentUserId will be used from props or from user._id
+                } catch (e) {
+                    console.error('Error parsing currentUser:', e);
+                }
+            }
+        }
+    }, [currentUserId]);
 
     useEffect(() => {
         if (isRecording) {
@@ -71,15 +94,32 @@ export default function StudentChat() {
         return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     };
 
-    const handleSend = () => {
-        if (newMsg.trim().length === 0) return;
+    const handleSend = async () => {
+        if (newMsg.trim().length === 0 || !isConnected) return;
 
-        const now = new Date();
-        const time = `${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`;
-        const newMessage = { id: Date.now(), user: "Bạn", text: newMsg, time };
+        try {
+            await sendMessage(newMsg.trim());
+            setNewMsg("");
+            sendTyping(false);
+        } catch (err) {
+            console.error('Error sending message:', err);
+        }
+    };
 
-        setMessages((prev) => [...prev, newMessage]);
-        setNewMsg("");
+    const getCurrentUserId = () => {
+        if (currentUserId) return currentUserId;
+        if (typeof window !== 'undefined') {
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    return user._id || user.id;
+                } catch (e) {
+                    return null;
+                }
+            }
+        }
+        return null;
     };
 
     const getInitials = (name: string) => {
@@ -94,9 +134,20 @@ export default function StudentChat() {
                         <MessageCircle className="h-5 w-5 text-primary" />
                         <CardTitle className="text-lg font-semibold">Thảo luận lớp học</CardTitle>
                     </div>
-                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                        {messages.length}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                        {isConnected ? (
+                            <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20">
+                                {onlineUsers.length} online
+                            </Badge>
+                        ) : (
+                            <Badge variant="secondary" className="bg-red-500/10 text-red-600 border-red-500/20">
+                                Disconnected
+                            </Badge>
+                        )}
+                        <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                            {messages.length}
+                        </Badge>
+                    </div>
                 </div>
             </CardHeader>
 
@@ -105,45 +156,91 @@ export default function StudentChat() {
                     ref={chatRef}
                     className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/30"
                 >
-                    {messages.map((msg) => {
-                        const isOwn = msg.user === "Bạn";
-                        return (
-                            <div
-                                key={msg.id}
-                                className={`flex items-start gap-3 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
-                            >
-                                {/* Avatar */}
-                                <div
-                                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shadow-sm ${isOwn
-                                        ? "bg-primary text-primary-foreground"
-                                        : "bg-muted text-muted-foreground"
-                                        }`}
-                                >
-                                    {isOwn ? (
-                                        <User className="h-4 w-4" />
-                                    ) : (
-                                        <span>{getInitials(msg.user)}</span>
-                                    )}
-                                </div>
+                    {isLoading ? (
+                        <div className="text-center text-muted-foreground py-8">
+                            Đang tải tin nhắn...
+                        </div>
+                    ) : messages.length === 0 ? (
+                        <div className="text-center text-muted-foreground py-8">
+                            Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!
+                        </div>
+                    ) : (
+                        messages.map((msg) => {
+                            const currentUserId = getCurrentUserId();
+                            const isOwn = msg.user._id === currentUserId;
+                            const time = new Date(msg.createdAt).toLocaleTimeString("vi-VN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            });
 
-                                {/* Message bubble */}
-                                <div className={`flex flex-col max-w-[75%] ${isOwn ? "items-end" : "items-start"}`}>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xs font-medium text-muted-foreground">{msg.user}</span>
-                                        <span className="text-xs text-muted-foreground/70">{msg.time}</span>
-                                    </div>
+                            return (
+                                <div
+                                    key={msg._id}
+                                    className={`flex items-start gap-3 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
+                                >
+                                    {/* Avatar */}
                                     <div
-                                        className={`px-4 py-2.5 rounded-2xl shadow-sm transition-all ${isOwn
-                                            ? "bg-primary text-primary-foreground rounded-tr-sm"
-                                            : "bg-muted text-foreground rounded-tl-sm"
+                                        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shadow-sm ${isOwn
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted text-muted-foreground"
                                             }`}
                                     >
-                                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                                        {isOwn ? (
+                                            <User className="h-4 w-4" />
+                                        ) : (
+                                            <span>{getInitials(msg.user.name)}</span>
+                                        )}
+                                    </div>
+
+                                    {/* Message bubble */}
+                                    <div className={`flex flex-col max-w-[75%] ${isOwn ? "items-end" : "items-start"}`}>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-xs font-medium text-muted-foreground">{msg.user.name}</span>
+                                            <span className="text-xs text-muted-foreground/70">{time}</span>
+                                        </div>
+
+                                        {/* Reply to message (nếu có) */}
+                                        {msg.replyTo && typeof msg.replyTo === 'object' && (
+                                            <div className={`mb-2 px-3 py-2 rounded-lg border-l-2 text-xs ${isOwn
+                                                ? "bg-primary/10 border-primary/30 text-primary-foreground/70"
+                                                : "bg-muted/50 border-muted-foreground/30 text-muted-foreground"
+                                                }`}>
+                                                <div className="font-medium mb-1">
+                                                    {msg.replyTo.user.name}
+                                                </div>
+                                                <div className="line-clamp-2">
+                                                    {msg.replyTo.message}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div
+                                            className={`px-4 py-2.5 rounded-2xl shadow-sm transition-all ${isOwn
+                                                ? "bg-primary text-primary-foreground rounded-tr-sm"
+                                                : "bg-muted text-foreground rounded-tl-sm"
+                                                }`}
+                                        >
+                                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })
+                    )}
+
+                    {/* Typing indicator */}
+                    {Object.keys(typingUsers).length > 0 && (
+                        <div className="text-sm text-muted-foreground italic">
+                            {Object.values(typingUsers).join(', ')} đang gõ...
+                        </div>
+                    )}
+
+                    {/* Error message */}
+                    {error && (
+                        <div className="px-4 py-2 bg-red-100 text-red-700 text-sm rounded-lg">
+                            {error}
+                        </div>
+                    )}
                 </div>
 
                 {/* Ô nhập chat */}
@@ -163,7 +260,14 @@ export default function StudentChat() {
                         <Input
                             placeholder="Nhập bình luận..."
                             value={newMsg}
-                            onChange={(e) => setNewMsg(e.target.value)}
+                            onChange={(e) => {
+                                setNewMsg(e.target.value);
+                                if (e.target.value.trim()) {
+                                    sendTyping(true);
+                                } else {
+                                    sendTyping(false);
+                                }
+                            }}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter" && !e.shiftKey) {
                                     e.preventDefault();
@@ -171,7 +275,7 @@ export default function StudentChat() {
                                 }
                             }}
                             className="flex-1"
-                            disabled={isRecording}
+                            disabled={isRecording || !isConnected}
                         />
                         <div className="flex items-center gap-2">
                             <Button
@@ -186,7 +290,7 @@ export default function StudentChat() {
                             </Button>
                             <Button
                                 onClick={handleSend}
-                                disabled={!newMsg.trim() || isRecording}
+                                disabled={!newMsg.trim() || isRecording || !isConnected}
                                 className="bg-primary hover:bg-primary/90 text-white cursor-pointer shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 size="icon"
                             >

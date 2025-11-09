@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSocket } from '@/hooks/socket/SocketContext';
+import { getSessionMessages, createSessionMessage, deleteSessionMessage, SessionMessage } from '@/apis/sessionMessage';
 
 interface Message {
   _id: string;
@@ -44,11 +45,45 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [typingUsers, setTypingUsers] = useState<{ [userId: string]: string }>({});
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const currentSessionRef = useRef<string | null>(null);
   const typingTimeoutRef = useRef<{ [userId: string]: NodeJS.Timeout }>({});
+  const fetchMessages = useCallback(async (sessionId: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const apiMessages = await getSessionMessages(sessionId);
+      console.log(apiMessages);
+      
+      const transformedMessages: Message[] = apiMessages
+        .filter(msg => !msg.isDeleted) // Filter out deleted messages
+        .map(msg => ({
+          _id: msg._id,
+          sessionId: msg.sessionId,
+          user: {
+            _id: msg.user._id,
+            name: msg.user.name,
+            email: msg.user.email,
+            avatar: msg.user.avatar,
+          },
+          message: msg.message,
+          messageType: msg.messageType,
+          replyTo: msg.replyTo || undefined,
+          createdAt: msg.createdAt,
+          updatedAt: msg.updatedAt,
+        }));
+      
+      setMessages(transformedMessages);
+    } catch (err: any) {
+      console.error('Error fetching messages:', err);
+      setError(err.message || 'Không thể tải tin nhắn');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Join session
-  const joinSession = useCallback((sessionId: string) => {
+  const joinSession = useCallback(async (sessionId: string) => {
     if (!socket || !isConnected) {
       setError('Socket not connected');
       return;
@@ -58,10 +93,14 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
       socket.emit('leave_session', currentSessionRef.current);
     }
 
+    // Fetch existing messages from API
+    await fetchMessages(sessionId);
+
+    // Join socket room
     socket.emit('join_session', sessionId);
     currentSessionRef.current = sessionId;
     setError(null);
-  }, [socket, isConnected]);
+  }, [socket, isConnected, fetchMessages]);
 
   // Leave session
   const leaveSession = useCallback(() => {
@@ -72,18 +111,53 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
   }, [socket]);
 
   // Send message
-  const sendMessage = useCallback((message: string, messageType: 'text' | 'image' | 'file' = 'text', replyTo?: string) => {
-    if (!socket || !currentSessionRef.current) {
+  const sendMessage = useCallback(async (message: string, messageType: 'text' | 'image' | 'file' = 'text', replyTo?: string) => {
+    if (!currentSessionRef.current) {
       setError('Not connected to session');
       return;
     }
 
-    socket.emit('send_message', {
-      sessionId: currentSessionRef.current,
-      message,
-      messageType,
-      replyTo,
-    });
+    try {
+      // Send message via API
+      const newMessage = await createSessionMessage({
+        sessionId: currentSessionRef.current,
+        message,
+        messageType,
+        replyTo: replyTo || null,
+      });
+
+      // Transform and add to messages
+      const transformedMessage: Message = {
+        _id: newMessage._id,
+        sessionId: newMessage.sessionId,
+        user: {
+          _id: newMessage.user._id,
+          name: newMessage.user.name,
+          email: newMessage.user.email,
+          avatar: newMessage.user.avatar,
+        },
+        message: newMessage.message,
+        messageType: newMessage.messageType,
+        replyTo: newMessage.replyTo || undefined,
+        createdAt: newMessage.createdAt,
+        updatedAt: newMessage.updatedAt,
+      };
+
+      setMessages((prev) => [...prev, transformedMessage]);
+
+      // Also emit via socket for real-time updates
+      if (socket) {
+        socket.emit('send_message', {
+          sessionId: currentSessionRef.current,
+          message,
+          messageType,
+          replyTo,
+        });
+      }
+    } catch (err: any) {
+      console.error('Error sending message:', err);
+      setError(err.message || 'Không thể gửi tin nhắn');
+    }
   }, [socket]);
 
   // Edit message
@@ -101,16 +175,30 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
   }, [socket]);
 
   // Delete message
-  const deleteMessage = useCallback((messageId: string) => {
-    if (!socket || !currentSessionRef.current) {
+  const deleteMessage = useCallback(async (messageId: string) => {
+    if (!currentSessionRef.current) {
       setError('Not connected to session');
       return;
     }
 
-    socket.emit('delete_message', {
-      messageId,
-      sessionId: currentSessionRef.current,
-    });
+    try {
+      // Delete message via API
+      await deleteSessionMessage(messageId);
+      
+      // Remove from local state
+      setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
+
+      // Also emit via socket for real-time updates
+      if (socket) {
+        socket.emit('delete_message', {
+          messageId,
+          sessionId: currentSessionRef.current,
+        });
+      }
+    } catch (err: any) {
+      console.error('Error deleting message:', err);
+      setError(err.message || 'Không thể xóa tin nhắn');
+    }
   }, [socket]);
 
   // Typing indicator
