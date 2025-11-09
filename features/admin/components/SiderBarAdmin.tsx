@@ -16,6 +16,7 @@ import {
     BarChart3,
     ChevronLeft,
     ChevronRight,
+    User,
 } from "lucide-react"
 import { cn } from "@/shared/lib/utils"
 import { useAdminLanguage } from "../i18n"
@@ -32,12 +33,9 @@ export default function SiderBarAdmin({ collapsed, onToggle }: AdminSidebarProps
 
     const menuItems = [
         { icon: LayoutDashboard, label: t("overview"), href: "/admin" },
-        { icon: ChefHat, label: t("restaurants"), href: "/admin/restaurants" },
-        { icon: MapPin, label: t("locations"), href: "/admin/locations" },
         { icon: Users, label: t("users"), href: "/admin/users" },
-        { icon: Star, label: t("reviews"), href: "/admin/reviews" },
-        { icon: Video, label: t("livestreams"), href: "/admin/livestreams" },
-        { icon: Calendar, label: t("events"), href: "/admin/events" },
+        { icon: User, label: t("teachers"), href: "/admin/teachers" },
+        { icon: User, label: t("students"), href: "/admin/students" },
         { icon: Settings, label: t("settings"), href: "/admin/settings" },
 
     ]
@@ -59,7 +57,7 @@ export default function SiderBarAdmin({ collapsed, onToggle }: AdminSidebarProps
                         </div>
                         <div>
                             <span className="font-bold text-base block leading-tight">{t("adminDashboard")}</span>
-                            <span className="text-[10px] text-muted-foreground">Sài Gòn Culinary Hub</span>
+                            <span className="text-[10px] text-muted-foreground">Inclusive Learn</span>
                         </div>
                     </Link>
                 )}

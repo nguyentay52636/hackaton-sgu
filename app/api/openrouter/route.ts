@@ -28,7 +28,7 @@ async function openrouterApi(req: Request) {
     }
 
     const safeReferer = (process.env.SITE_URL || "").replace(/[^\x00-\x7F]/g, "");
-    const safeTitle = (process.env.SITE_NAME || "Sài Gòn Culinary Hub").replace(
+    const safeTitle = (process.env.SITE_NAME || "Inclusive Learn").replace(
       /[^\x00-\x7F]/g,
       ""
     );
@@ -74,7 +74,7 @@ async function openrouterApi(req: Request) {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "HTTP-Referer": safeReferer || "http://localhost:3000",
-        "X-Title": safeTitle || "Sai Gon Culinary Hub",
+        "X-Title": safeTitle || "Inclusive Learn",
         "Content-Type": "application/json",
       },
       body: JSON.stringify(requestBody),

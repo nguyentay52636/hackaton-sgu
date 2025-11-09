@@ -130,7 +130,7 @@ export default function Chat() {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "1",
-            text: "Xin chào! Tôi là trợ lý ảo của Sài Gòn Culinary Hub. Tôi có thể giúp gì cho bạn? 🍜",
+            text: "Xin chào! Tôi là trợ lý ảo của Inclusive Learn. Tôi có thể giúp gì cho bạn? 🍜",
             sender: "bot",
             timestamp: new Date(),
         },
@@ -251,7 +251,7 @@ export default function Chat() {
     const handleContactAdmin = () => {
         const adminMessage: Message = {
             id: Date.now().toString(),
-            text: "Đã chuyển bạn đến bộ phận hỗ trợ. Admin sẽ phản hồi trong vòng 24 giờ. Email: support@saigonculinary.com 📧",
+            text: "Đã chuyển bạn đến bộ phận hỗ trợ. Admin sẽ phản hồi trong vòng 24 giờ. Email: support@inclusivelearn.com 📧",
             sender: "bot",
             timestamp: new Date(),
         }
