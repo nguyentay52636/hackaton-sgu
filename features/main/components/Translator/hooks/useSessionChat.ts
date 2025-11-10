@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSocket } from '@/hooks/socket/SocketContext';
-import { getSessionMessages, createSessionMessage, deleteSessionMessage, SessionMessage } from '@/apis/sessionMessage';
+import { getSessionMessages, deleteSessionMessage, SessionMessage } from '@/apis/sessionMessage';
 
 interface MessageReply {
   _id: string;
@@ -122,7 +122,7 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
     }
   }, [socket]);
 
-  // Send message
+  // Send message (wait for backend broadcast; no optimistic UI)
   const sendMessage = useCallback(async (message: string, messageType: 'text' | 'image' | 'file' = 'text', replyTo?: string) => {
     const targetSessionId = currentSessionRef.current ?? sessionId;
 
@@ -131,48 +131,23 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
       return;
     }
 
+    if (!socket || !isConnected) {
+      setError('Socket not connected');
+      return;
+    }
+
     try {
-      // Send message via API
-      const newMessage = await createSessionMessage({
-        sessionId: targetSessionId,
-        message,
-        messageType,
-        replyTo: replyTo || null,
-      });
-
-      // Transform and add to messages
-      const transformedMessage: Message = {
-        _id: newMessage._id,
-        sessionId: newMessage.sessionId,
-        user: {
-          _id: newMessage.user._id,
-          name: newMessage.user.name,
-          email: newMessage.user.email,
-          avatar: newMessage.user.avatar,
-        },
-        message: newMessage.message,
-        messageType: newMessage.messageType,
-        replyTo: newMessage.replyTo || undefined,
-        createdAt: newMessage.createdAt,
-        updatedAt: newMessage.updatedAt,
-      };
-
-      setMessages((prev) => {
-        const exists = prev.some((msg) => msg._id === transformedMessage._id);
-        return exists ? prev : [...prev, transformedMessage];
-      });
-
-      if (socket && currentSessionRef.current === targetSessionId) {
-        socket.emit('send_message', {
-          sessionId: targetSessionId,
-          message,
-          messageType,
-          replyTo,
-        });
-      } else if (socket && isConnected) {
+      if (currentSessionRef.current !== targetSessionId) {
         socket.emit('join_session', targetSessionId);
         currentSessionRef.current = targetSessionId;
       }
+
+      socket.emit('send_message', {
+        sessionId: targetSessionId,
+        message,
+        messageType,
+        replyTo,
+      });
     } catch (err: any) {
       console.error('Error sending message:', err);
       setError(err.message || 'Không thể gửi tin nhắn');
@@ -232,7 +207,6 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
     });
   }, [socket]);
 
-  // Socket event listeners
   useEffect(() => {
     if (!socket) return;
 
