@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Send, MessageCircle, User, Voicemail, Mic } from "lucide-react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { Send, MessageCircle, User, Mic } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
 import { useVoiceRecognition } from "../hooks";
 import { useSessionChat } from "../hooks/useSessionChat";
+import { useSelector } from "react-redux";
+import { selectAuth } from "@/redux/Slice/authSlice";
+import { useSocket } from "@/hooks/socket/SocketContext";
 
 interface StudentChatProps {
     sessionId: string;
@@ -19,6 +22,9 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
     const [elapsedTime, setElapsedTime] = useState(0);
     const chatRef = useRef<HTMLDivElement>(null);
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const { user, token } = useSelector(selectAuth);
+    const { connect, disconnect } = useSocket();
+
     const [sourceLang, setSourceLang] = useState("vi");
 
     const {
@@ -36,6 +42,33 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
         setNewMsg(transcript);
     });
 
+    const resolvedToken = useMemo(() => {
+        if (token) return token;
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("token");
+        }
+        return null;
+    }, [token]);
+
+    const resolvedUserId = useMemo(() => {
+        if (currentUserId) return currentUserId;
+        if (user?._id) return user._id;
+
+        if (typeof window !== "undefined") {
+            const storedUser = localStorage.getItem("currentUser");
+            if (storedUser) {
+                try {
+                    const parsedUser = JSON.parse(storedUser);
+                    return parsedUser._id || parsedUser.id || null;
+                } catch (error) {
+                    console.error("Error parsing currentUser:", error);
+                }
+            }
+        }
+
+        return null;
+    }, [currentUserId, user]);
+
     const handleVoiceCall = () => {
         if (isRecording) {
             stopRecording();
@@ -48,20 +81,17 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
         chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
     }, [messages]);
 
-    // Get current user ID from localStorage if not provided
     useEffect(() => {
-        if (!currentUserId && typeof window !== 'undefined') {
-            const storedUser = localStorage.getItem('currentUser');
-            if (storedUser) {
-                try {
-                    const user = JSON.parse(storedUser);
-                    // currentUserId will be used from props or from user._id
-                } catch (e) {
-                    console.error('Error parsing currentUser:', e);
-                }
-            }
+        if (!resolvedToken) {
+            return;
         }
-    }, [currentUserId]);
+
+        connect(resolvedToken);
+
+        return () => {
+            disconnect();
+        };
+    }, [connect, disconnect, resolvedToken]);
 
     useEffect(() => {
         if (isRecording) {
@@ -88,6 +118,12 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
         }
     }, [isRecording]);
 
+    useEffect(() => {
+        return () => {
+            sendTyping(false);
+        };
+    }, [sendTyping]);
+
     const formatTime = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -95,7 +131,7 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
     };
 
     const handleSend = async () => {
-        if (newMsg.trim().length === 0 || !isConnected) return;
+        if (newMsg.trim().length === 0) return;
 
         try {
             await sendMessage(newMsg.trim());
@@ -106,24 +142,9 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
         }
     };
 
-    const getCurrentUserId = () => {
-        if (currentUserId) return currentUserId;
-        if (typeof window !== 'undefined') {
-            const storedUser = localStorage.getItem('currentUser');
-            if (storedUser) {
-                try {
-                    const user = JSON.parse(storedUser);
-                    return user._id || user.id;
-                } catch (e) {
-                    return null;
-                }
-            }
-        }
-        return null;
-    };
-
-    const getInitials = (name: string) => {
-        return name.charAt(0).toUpperCase();
+    const getInitials = (name?: string) => {
+        if (!name) return "?";
+        return name.trim().charAt(0).toUpperCase();
     };
 
     return (
@@ -166,12 +187,14 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
                         </div>
                     ) : (
                         messages.map((msg) => {
-                            const currentUserId = getCurrentUserId();
-                            const isOwn = msg.user._id === currentUserId;
+                            const isOwn = resolvedUserId ? msg.user._id === resolvedUserId : false;
+                            const senderName = msg.user?.name ?? "Người dùng";
                             const time = new Date(msg.createdAt).toLocaleTimeString("vi-VN", {
                                 hour: "2-digit",
                                 minute: "2-digit",
                             });
+
+                            const replyToMessage = (msg.replyTo && typeof msg.replyTo === "object") ? msg.replyTo : null;
 
                             return (
                                 <div
@@ -188,28 +211,28 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
                                         {isOwn ? (
                                             <User className="h-4 w-4" />
                                         ) : (
-                                            <span>{getInitials(msg.user.name)}</span>
+                                            <span>{getInitials(senderName)}</span>
                                         )}
                                     </div>
 
                                     {/* Message bubble */}
                                     <div className={`flex flex-col max-w-[75%] ${isOwn ? "items-end" : "items-start"}`}>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-xs font-medium text-muted-foreground">{msg.user.name}</span>
+                                            <span className="text-xs font-medium text-muted-foreground">{senderName}</span>
                                             <span className="text-xs text-muted-foreground/70">{time}</span>
                                         </div>
 
                                         {/* Reply to message (nếu có) */}
-                                        {msg.replyTo && typeof msg.replyTo === 'object' && (
+                                        {replyToMessage && (
                                             <div className={`mb-2 px-3 py-2 rounded-lg border-l-2 text-xs ${isOwn
                                                 ? "bg-primary/10 border-primary/30 text-primary-foreground/70"
                                                 : "bg-muted/50 border-muted-foreground/30 text-muted-foreground"
                                                 }`}>
                                                 <div className="font-medium mb-1">
-                                                    {msg.replyTo.user.name}
+                                                    {replyToMessage.user?.name ?? "Người dùng"}
                                                 </div>
                                                 <div className="line-clamp-2">
-                                                    {msg.replyTo.message}
+                                                    {replyToMessage.message}
                                                 </div>
                                             </div>
                                         )}
@@ -262,7 +285,7 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
                             value={newMsg}
                             onChange={(e) => {
                                 setNewMsg(e.target.value);
-                                if (e.target.value.trim()) {
+                                if (e.target.value.trim() && isConnected) {
                                     sendTyping(true);
                                 } else {
                                     sendTyping(false);
@@ -274,8 +297,9 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
                                     handleSend();
                                 }
                             }}
+                            onBlur={() => sendTyping(false)}
                             className="flex-1"
-                            disabled={isRecording || !isConnected}
+                            disabled={isRecording}
                         />
                         <div className="flex items-center gap-2">
                             <Button
@@ -290,7 +314,7 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
                             </Button>
                             <Button
                                 onClick={handleSend}
-                                disabled={!newMsg.trim() || isRecording || !isConnected}
+                                disabled={!newMsg.trim() || isRecording}
                                 className="bg-primary hover:bg-primary/90 text-white cursor-pointer shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 size="icon"
                             >

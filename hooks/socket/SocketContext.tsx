@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface SocketContextType {
@@ -27,46 +27,56 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
 
-    const connect = (token: string) => {
-        if (socket?.connected) {
+    const connect = useCallback((token: string) => {
+        if (!token) {
             return;
         }
 
-        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:8000', {
-            auth: {
-                token: token,
-            },
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionDelay: 1000,
-            reconnectionAttempts: 5,
-        });
+        setSocket((currentSocket) => {
+            if (currentSocket?.connected) {
+                return currentSocket;
+            }
 
-        newSocket.on('connect', () => {
-            console.log('Socket connected:', newSocket.id);
-            setIsConnected(true);
-        });
+            if (currentSocket) {
+                currentSocket.disconnect();
+            }
 
-        newSocket.on('disconnect', () => {
-            console.log('Socket disconnected');
+            const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:8000', {
+                auth: { token },
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5,
+            });
+
+            newSocket.on('connect', () => {
+                console.log('Socket connected:', newSocket.id);
+                setIsConnected(true);
+            });
+
+            newSocket.on('disconnect', () => {
+                console.log('Socket disconnected');
+                setIsConnected(false);
+            });
+
+            newSocket.on('connect_error', (error) => {
+                console.error('Socket connection error:', error);
+                setIsConnected(false);
+            });
+
+            return newSocket;
+        });
+    }, []);
+
+    const disconnect = useCallback(() => {
+        setSocket((currentSocket) => {
+            if (currentSocket) {
+                currentSocket.disconnect();
+            }
             setIsConnected(false);
+            return null;
         });
-
-        newSocket.on('connect_error', (error) => {
-            console.error('Socket connection error:', error);
-            setIsConnected(false);
-        });
-
-        setSocket(newSocket);
-    };
-
-    const disconnect = () => {
-        if (socket) {
-            socket.disconnect();
-            setSocket(null);
-            setIsConnected(false);
-        }
-    };
+    }, []);
 
     useEffect(() => {
         return () => {

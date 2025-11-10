@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+const rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const trimmedBaseUrl = rawBaseUrl.replace(/\/$/, '');
+const baseURL = trimmedBaseUrl.endsWith('/api') ? trimmedBaseUrl : `${trimmedBaseUrl}/api`;
+
 const baseApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  baseURL,
 });
 
 if (typeof window !== 'undefined') {

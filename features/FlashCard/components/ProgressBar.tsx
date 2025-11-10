@@ -14,7 +14,7 @@ export function ProgressBar({ mastered, total }: ProgressBarProps) {
     <div className="mb-8 space-y-2">
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-foreground">
-          Progress: {mastered} / {total} mastered
+          Tiến độ học tập: {mastered} / {total}
         </span>
         <span className="text-muted-foreground">{Math.round(progress)}%</span>
       </div>

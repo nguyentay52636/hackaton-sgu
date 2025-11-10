@@ -15,17 +15,17 @@ export function MasteryControls({ isMastered, onMastered }: MasteryControlsProps
         onClick={onMastered}
         className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:hover:bg-red-950/50 dark:text-red-400 dark:border-red-900"
       >
-        Still Learning
+        Vẫn Đang Học
       </Button>
       <Button
         variant="outline"
         onClick={onMastered}
         className="bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:hover:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900"
       >
-        Know It
+        Biết Rồi
       </Button>
       <Button variant="default" onClick={onMastered} className={isMastered ? "bg-primary" : ""}>
-        {isMastered ? "Mastered ✓" : "Mark Mastered"}
+        {isMastered ? "Đã Biết ✓" : "Đánh Dấu Đã Biết"}
       </Button>
     </div>
   )

@@ -4,6 +4,17 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSocket } from '@/hooks/socket/SocketContext';
 import { getSessionMessages, createSessionMessage, deleteSessionMessage, SessionMessage } from '@/apis/sessionMessage';
 
+interface MessageReply {
+  _id: string;
+  message: string;
+  user?: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  } | null;
+}
+
 interface Message {
   _id: string;
   sessionId: string;
@@ -15,7 +26,7 @@ interface Message {
   };
   message: string;
   messageType: 'text' | 'image' | 'file';
-  replyTo?: string;
+  replyTo?: MessageReply | string;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,6 +40,7 @@ interface UseSessionChatReturn {
   messages: Message[];
   onlineUsers: OnlineUser[];
   isConnected: boolean;
+  isLoading: boolean;
   joinSession: (sessionId: string) => void;
   leaveSession: () => void;
   sendMessage: (message: string, messageType?: 'text' | 'image' | 'file', replyTo?: string) => void;
@@ -56,7 +68,7 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
       console.log(apiMessages);
       
       const transformedMessages: Message[] = apiMessages
-        .filter(msg => !msg.isDeleted) // Filter out deleted messages
+        .filter(msg => !msg.isDeleted)
         .map(msg => ({
           _id: msg._id,
           sessionId: msg.sessionId,
@@ -112,15 +124,17 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
 
   // Send message
   const sendMessage = useCallback(async (message: string, messageType: 'text' | 'image' | 'file' = 'text', replyTo?: string) => {
-    if (!currentSessionRef.current) {
-      setError('Not connected to session');
+    const targetSessionId = currentSessionRef.current ?? sessionId;
+
+    if (!targetSessionId) {
+      setError('Session is not available');
       return;
     }
 
     try {
       // Send message via API
       const newMessage = await createSessionMessage({
-        sessionId: currentSessionRef.current,
+        sessionId: targetSessionId,
         message,
         messageType,
         replyTo: replyTo || null,
@@ -143,22 +157,27 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
         updatedAt: newMessage.updatedAt,
       };
 
-      setMessages((prev) => [...prev, transformedMessage]);
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg._id === transformedMessage._id);
+        return exists ? prev : [...prev, transformedMessage];
+      });
 
-      // Also emit via socket for real-time updates
-      if (socket) {
+      if (socket && currentSessionRef.current === targetSessionId) {
         socket.emit('send_message', {
-          sessionId: currentSessionRef.current,
+          sessionId: targetSessionId,
           message,
           messageType,
           replyTo,
         });
+      } else if (socket && isConnected) {
+        socket.emit('join_session', targetSessionId);
+        currentSessionRef.current = targetSessionId;
       }
     } catch (err: any) {
       console.error('Error sending message:', err);
       setError(err.message || 'Không thể gửi tin nhắn');
     }
-  }, [socket]);
+  }, [socket, sessionId, isConnected]);
 
   // Edit message
   const editMessage = useCallback((messageId: string, newMessage: string) => {
@@ -218,7 +237,10 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
     if (!socket) return;
 
     const handleNewMessage = (message: Message) => {
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg._id === message._id);
+        return exists ? prev : [...prev, message];
+      });
     };
 
     const handleMessageEdited = (data: { messageId: string; newMessage: string; updatedAt: string }) => {
@@ -301,6 +323,7 @@ export const useSessionChat = (sessionId: string | null): UseSessionChatReturn =
     messages,
     onlineUsers,
     isConnected,
+    isLoading,
     joinSession,
     leaveSession,
     sendMessage,

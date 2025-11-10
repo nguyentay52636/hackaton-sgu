@@ -1,5 +1,4 @@
 "use client"
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select"
 import { LANGUAGES } from "../constants"
 

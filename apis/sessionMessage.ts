@@ -32,7 +32,7 @@ export interface SessionMessagesResponse {
  */
 export const getSessionMessages = async (sessionId: string, page: number = 1, limit: number = 50) => {
     try {
-        const {data} = await baseApi.get<SessionMessagesResponse>(`/api/session-message/${sessionId}/messages`, {
+        const {data} = await baseApi.get<SessionMessagesResponse>(`session-message/${sessionId}/messages`, {
             params: {
                 page,
                 limit
@@ -48,7 +48,7 @@ export const getSessionMessages = async (sessionId: string, page: number = 1, li
 
 /**
  * Create a new message
- * POST /messages
+ * POST /api/session-message/messages
  */
 export const createSessionMessage = async (messageData: {
     sessionId: string
@@ -57,8 +57,8 @@ export const createSessionMessage = async (messageData: {
     replyTo?: string | null
 }) => {        
     try {
-        const {data} = await baseApi.post<SessionMessage>('/messages', messageData)
-        return data
+        const {data} = await baseApi.post<{message: string, data: SessionMessage}>('session-message/messages', messageData)
+        return data.data
     } catch (error) {
         console.error('Error creating session message:', error)
         throw error
@@ -67,11 +67,11 @@ export const createSessionMessage = async (messageData: {
 
 /**
  * Delete a message
- * DELETE /messages/:messageId
+ * DELETE /api/session-message/messages/:messageId
  */
 export const deleteSessionMessage = async (messageId: string) => {
     try {
-        const {data} = await baseApi.delete<SessionMessage>(`/messages/${messageId}`)
+        const {data} = await baseApi.delete(`session-message/messages/${messageId}`)
         return data
     } catch (error) {
         console.error('Error deleting session message:', error)

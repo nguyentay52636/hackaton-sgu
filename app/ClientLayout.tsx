@@ -6,6 +6,7 @@ import { DynamicLang } from "./components/DynamicLang";
 import { AccessibilityProvider } from "@/shared/lib/accessibility-context";
 import { Provider } from "react-redux";
 import store from "@/redux/store";
+import { SocketProvider } from "@/hooks/socket/SocketContext";
 
 export default function ClientLayout({
     children,
@@ -18,12 +19,14 @@ export default function ClientLayout({
 
     return (
         <Provider store={store}>
-            <AccessibilityProvider>
-                <DynamicLang />
-                {!isAuthPage && !isAdminPage && <HeaderAuth />}
-                {children}
-                {/* {!isAuthPage && !isAdminPage && <Footer />} */}
-            </AccessibilityProvider>
+            <SocketProvider>
+                <AccessibilityProvider>
+                    <DynamicLang />
+                    {!isAuthPage && !isAdminPage && <HeaderAuth />}
+                    {children}
+                    {/* {!isAuthPage && !isAdminPage && <Footer />} */}
+                </AccessibilityProvider>
+            </SocketProvider>
         </Provider>
     );
 }

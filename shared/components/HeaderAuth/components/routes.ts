@@ -12,6 +12,8 @@ import {
   Brain,
   Mic,
   MessageSquare,
+  CardSimIcon,
+  
 } from "lucide-react"
 
 export const navItems = [
@@ -20,6 +22,6 @@ export const navItems = [
   { href: "/workspace", label: "Không gian làm việc", icon: Notebook },
   { href: "/translator", label: "Dịch thuật", icon: MessageSquare },
   { href: "/pronunciation", label: "Luyện phát âm", icon: Mic },
-
+  { href: "/flash-card", label: "Thẻ học tập", icon: CardSimIcon },
 ]
 
