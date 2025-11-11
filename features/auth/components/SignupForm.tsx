@@ -33,6 +33,7 @@ import { AppDispatch } from "@/redux/store";
 import { registerThunk, selectAuth, clearError, resetRegistrationSuccess } from "@/redux/Slice/authSlice";
 import { useRouter } from "next/navigation";
 import { UserRole } from "@/apis/authApi";
+import { registerFace } from "@/apis/faceApi";
 
 export function SignupForm({
   className,
@@ -44,6 +45,12 @@ export function SignupForm({
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [role, setRole] = React.useState<UserRole>("student");
+  const [capturedFace, setCapturedFace] = React.useState<string | null>(null);
+  const [isRegisteringFace, setIsRegisteringFace] = React.useState(false);
+  const [isWebcamOpen, setIsWebcamOpen] = React.useState(false);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
+  const streamRef = React.useRef<MediaStream | null>(null);
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { isLoading, error, registrationSuccess, isAuthenticated, user } = useSelector(selectAuth);
@@ -85,20 +92,26 @@ export function SignupForm({
   // Handle successful registration
   React.useEffect(() => {
     if (registrationSuccess && !isLoading) {
-      showToast("Thành công", "Đăng ký thành công!", "success");
-      dispatch(resetRegistrationSuccess());
-
-      // If auto-login happened, redirect to home
-      if (isAuthenticated) {
+      const proceed = async () => {
+        showToast("Thành công", "Đăng ký thành công!", "success");
+        if (capturedFace && email) {
+          try {
+            setIsRegisteringFace(true);
+            await registerFace(email, capturedFace);
+            showToast("Thành công", "Đăng ký khuôn mặt thành công!", "success");
+          } catch (e: any) {
+            console.error("Register face error:", e);
+            showToast("Cảnh báo", "Đăng ký khuôn mặt thất bại. Bạn có thể thử lại sau.", "default");
+          } finally {
+            setIsRegisteringFace(false);
+          }
+        }
+        dispatch(resetRegistrationSuccess());
         setTimeout(() => {
           router.push("/");
-        }, 1500);
-      } else {
-        // Otherwise, redirect to login page
-        setTimeout(() => {
-          router.push("/");
-        }, 1500);
-      }
+        }, 1200);
+      };
+      proceed();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registrationSuccess, isLoading, isAuthenticated]);
@@ -133,6 +146,47 @@ export function SignupForm({
       // Error is handled by useEffect above
       console.log("Register error:", err);
     }
+  };
+
+  const startWebcam = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setIsWebcamOpen(true);
+    } catch (e) {
+      showToast("Lỗi", "Không thể truy cập camera", "destructive");
+    }
+  };
+
+  const stopWebcam = () => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setIsWebcamOpen(false);
+  };
+
+  const captureBase64 = () => {
+    if (!videoRef.current || !canvasRef.current) return null;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg");
+  };
+
+  const handleCaptureFace = () => {
+    const img = captureBase64();
+    if (!img) {
+      showToast("Lỗi", "Không thể chụp ảnh", "destructive");
+      return;
+    }
+    setCapturedFace(img);
+    stopWebcam();
   };
 
   return (
@@ -205,6 +259,47 @@ export function SignupForm({
             />
           </Field>
           <Field className="">
+            <FieldLabel className="text-lg mb-2">Khuôn mặt (tùy chọn)</FieldLabel>
+            <div className="flex flex-col gap-3">
+              {!capturedFace && (
+                <Button type="button" variant="outline" onClick={startWebcam} disabled={isRegisteringFace}>
+                  Mở camera để chụp
+                </Button>
+              )}
+              {isWebcamOpen && (
+                <div className="border rounded p-3 flex flex-col items-center gap-3">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="rounded bg-black w-[320px] h-[240px]"
+                  />
+                  <canvas ref={canvasRef} className="hidden" />
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" onClick={stopWebcam}>
+                      Hủy
+                    </Button>
+                    <Button type="button" onClick={handleCaptureFace}>
+                      Chụp ảnh
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {capturedFace && (
+                <div className="flex items-center gap-3">
+                  <img src={capturedFace} alt="face preview" className="w-24 h-24 rounded object-cover border" />
+                  <Button type="button" variant="outline" onClick={() => setCapturedFace(null)}>
+                    Chụp lại
+                  </Button>
+                </div>
+              )}
+              <FieldDescription className="text-sm mt-1">
+                Thêm ảnh để đăng ký đăng nhập bằng khuôn mặt sau khi tạo tài khoản.
+              </FieldDescription>
+            </div>
+          </Field>
+          <Field className="">
             <FieldLabel htmlFor="role" className="text-lg mb-2">Vai trò</FieldLabel>
             <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
               <SelectTrigger className="h-12 text-base w-full">
@@ -223,9 +318,9 @@ export function SignupForm({
             <Button
               type="submit"
               className="w-full h-12 text-lg font-semibold cursor-pointer"
-              disabled={isLoading}
+              disabled={isLoading || isRegisteringFace}
             >
-              {isLoading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
+              {isLoading ? "Đang tạo tài khoản..." : (isRegisteringFace ? "Đang đăng ký khuôn mặt..." : "Tạo tài khoản")}
             </Button>
           </Field>
 

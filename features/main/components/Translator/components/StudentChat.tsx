@@ -148,8 +148,8 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
     };
 
     return (
-        <Card className="h-full flex flex-col border-l bg-card/80 backdrop-blur-sm shadow-lg">
-            <CardHeader className="pb-3 border-b bg-gradient-to-r from-primary/5 to-primary/10">
+        <Card className="py-3!">
+            <CardHeader className="pb-3 border-b ">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <MessageCircle className="h-5 w-5 text-primary" />
@@ -172,10 +172,10 @@ export default function StudentChat({ sessionId, currentUserId }: StudentChatPro
                 </div>
             </CardHeader>
 
-            <CardContent className="p-4 flex flex-col flex-1 min-h-0">
+            <CardContent className="p-4 flex flex-col flex-1 h-[calc(100vh-10rem)] ">
                 <div
                     ref={chatRef}
-                    className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/30"
+                    className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/30 min-h-0"
                 >
                     {isLoading ? (
                         <div className="text-center text-muted-foreground py-8">

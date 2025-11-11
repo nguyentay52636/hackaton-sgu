@@ -26,7 +26,6 @@ if (typeof window !== 'undefined') {
         localStorage.removeItem('currentUser');
         localStorage.removeItem('token');
         localStorage.removeItem('isAuthenticated');
-
         window.location.href = '/auth/login';
       }
       return Promise.reject(error);
