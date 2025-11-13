@@ -37,6 +37,8 @@ import {
 import StudentChat from "@/features/main/components/Translator/components/StudentChat"
 import { getLessonById, Lesson as ApiLesson } from "@/apis/lessonApi"
 import { speak, stopSpeech } from "@/shared/lib/text-to-speech"
+import SuggestAI from "./components/SuggestAI"
+import HelpChat from "./components/Tabs/HelpChat"
 
 interface PageProps {
   params: Promise<{ id: string; sessionId: string }> | { id: string; sessionId: string }
@@ -398,168 +400,23 @@ export default function LessonDetailPage({ params }: PageProps) {
                                 </ScrollArea> */}
               </CardContent>
             </Card>
+
+
           </div>
-
-
-          <div className="space-y-6">
-            {/* AI Chat */}
-            <Card className="sticky top-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Trợ lý AI
-                </CardTitle>
-                <CardDescription>Hỏi bất kỳ câu hỏi nào về bài học</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Chat Mode */}
-                <div className="flex gap-2">
-                  <Button
-                    variant={chatMode === "simple" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setChatMode("simple")}
-                    className="flex-1"
-                  >
-                    Đơn giản
-                  </Button>
-                  <Button
-                    variant={chatMode === "full" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setChatMode("full")}
-                    className="flex-1"
-                  >
-                    Chi tiết
-                  </Button>
-                </div>
-
-                {/* Chat Messages */}
-                <ScrollArea className="h-[300px] border rounded-lg p-4">
-                  {chatMessages.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-8">
-                      <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p className="text-sm">Bắt đầu hỏi AI về bài học</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {chatMessages.map((msg) => (
-                        <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                          <div
-                            className={`max-w-[85%] rounded-lg p-3 ${msg.role === "user" ? "bg-blue-500 text-white" : "bg-muted"
-                              }`}
-                          >
-                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                            <p className="text-xs opacity-70 mt-1">
-                              {msg.timestamp.toLocaleTimeString("vi-VN", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                      {isSendingChat && (
-                        <div className="flex justify-start">
-                          <div className="bg-muted rounded-lg p-3">
-                            <div className="flex gap-1">
-                              <div
-                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                style={{ animationDelay: "0ms" }}
-                              />
-                              <div
-                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                style={{ animationDelay: "150ms" }}
-                              />
-                              <div
-                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                style={{ animationDelay: "300ms" }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </ScrollArea>
-
-                {/* Chat Input */}
-                <div className="space-y-2">
-                  <Textarea
-                    placeholder="Nhập câu hỏi của bạn..."
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault()
-                        handleSendChat()
-                      }
-                    }}
-                    rows={3}
-                  />
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setIsRecording(!isRecording)} className="gap-2 bg-transparent">
-                      <Mic className={`h-4 w-4 ${isRecording ? "text-red-500 animate-pulse" : ""}`} />
-                      {isRecording ? "Đang ghi..." : "Ghi âm"}
-                    </Button>
-                    <Button
-                      onClick={handleSendChat}
-                      disabled={!chatInput.trim() || isSendingChat}
-                      className="flex-1 gap-2"
-                    >
-                      Gửi
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-
-
-            {/* Quick AI Tools */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Công cụ AI nhanh</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2 bg-transparent"
-                  size="sm"
-                  onClick={() => setChatInput("Tóm tắt bài học này cho tôi")}
-                >
-                  <Lightbulb className="h-4 w-4" />
-                  Tóm tắt bài học
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2 bg-transparent"
-                  size="sm"
-                  onClick={() => setChatInput("Giải thích các từ khó trong bài học này")}
-                >
-                  <Languages className="h-4 w-4" />
-                  Giải thích từ khó
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2 bg-transparent"
-                  size="sm"
-                  onClick={() => setChatInput("Tạo câu hỏi ôn tập cho bài học này")}
-                >
-                  <FileQuestion className="h-4 w-4" />
-                  Tạo câu hỏi ôn tập
-                </Button>
-              </CardContent>
-            </Card>
-            <div className="sticky top-6">
-              <div className=" overflow-hidden">
-                <StudentChat
-                  sessionId={sessionId}
-                  key={sessionId}
-                />
-              </div>
+          <div className="sticky top-6">
+            <div className=" overflow-hidden">
+              <StudentChat
+                sessionId={sessionId}
+                key={sessionId}
+              />
             </div>
           </div>
+
+
+
         </div>
+        <HelpChat sessionId={sessionId || ""} />
+        <SuggestAI sessionId={sessionId || ""} />
       </div>
 
     </div>
