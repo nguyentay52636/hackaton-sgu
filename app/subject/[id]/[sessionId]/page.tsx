@@ -1,265 +1,567 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
-import { BookOpen, Video, FileText } from "lucide-react";
-import StudentChat from "@/features/main/components/Translator/components/StudentChat";
-import { Button } from "@/shared/ui/button";
-import TextContentReader from "./components/TextContentReader";
+"use client"
 
-// 🎓 Danh sách bài học ảo (mock data)
-const mockSessions = [
-    {
-        _id: "s001",
-        title: "Bài học 1: Giới thiệu về HTML",
-        description: "Tìm hiểu cấu trúc cơ bản của trang web với ngôn ngữ HTML.",
-        type: "video",
-        contentUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
-        textContent: `
-      HTML (HyperText Markup Language) là ngôn ngữ đánh dấu được dùng để xây dựng cấu trúc cơ bản của trang web.
-      Trong bài này, bạn sẽ học về các thẻ cơ bản như <html>, <head>, <body>, <h1>...<h6>, <p>, <a>.
-    `,
-        subject: "Lập trình Web cơ bản",
-        createdAt: "2025-10-28T08:00:00Z",
-    },
-    {
-        _id: "s002",
-        title: "Bài học 2: CSS và cách định dạng trang web",
-        description: "Hiểu cách CSS hoạt động và áp dụng để làm đẹp trang web.",
-        type: "text",
-        textContent: `
-      CSS (Cascading Style Sheets) cho phép bạn định dạng màu sắc, font chữ, bố cục và hiệu ứng cho trang HTML.
-      Trong bài này, bạn sẽ học cách chọn phần tử, sử dụng thuộc tính như color, margin, padding, background.
-    `,
-        subject: "Thiết kế giao diện web",
-        createdAt: "2025-10-29T10:00:00Z",
-    },
-    {
-        _id: "s003",
-        title: "Bài học 3: JavaScript cơ bản",
-        description: "Học cách làm trang web tương tác bằng JavaScript.",
-        type: "video",
-        contentUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
-        textContent: `
-      JavaScript là ngôn ngữ lập trình giúp trang web trở nên sống động. Bạn sẽ học về biến, hàm, vòng lặp và sự kiện.
-    `,
-        subject: "Lập trình Web cơ bản",
-        createdAt: "2025-11-01T14:00:00Z",
-    },
-    {
-        _id: "s004",
-        title: "Bài học 4: Xây dựng trang web hoàn chỉnh",
-        description: "Tổng hợp kiến thức HTML, CSS, JS để tạo một website đầu tiên.",
-        type: "text",
-        textContent: `
-      Trong bài này, bạn sẽ kết hợp tất cả các kỹ năng đã học để xây dựng một trang web cá nhân đơn giản, bao gồm layout, menu và nội dung.
-    `,
-        subject: "Dự án thực hành",
-        createdAt: "2025-11-05T09:00:00Z",
-    },
-    {
-        _id: "s005",
-        title: "Bài học 5: Giới thiệu trí tuệ nhân tạo (AI)",
-        description: "Tìm hiểu khái niệm cơ bản về AI và ứng dụng trong đời sống.",
-        type: "video",
-        contentUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
-        textContent: `
-      AI (Artificial Intelligence) là lĩnh vực giúp máy tính có khả năng học và đưa ra quyết định như con người.
-      Bạn sẽ tìm hiểu về Machine Learning, Chatbot, và cách AI được ứng dụng trong giáo dục.
-    `,
-        subject: "Công nghệ hiện đại",
-        createdAt: "2025-11-08T08:00:00Z",
-    },
-    {
-        _id: "s006",
-        title: "Bài học 6: Responsive Design và Mobile First",
-        description: "Học cách thiết kế website hiển thị tốt trên mọi thiết bị.",
-        type: "text",
-        textContent: `
-      Responsive Design là phương pháp thiết kế website sao cho giao diện tự động điều chỉnh để hiển thị tối ưu trên mọi kích thước màn hình, từ điện thoại đến máy tính bàn.
-      
-      Trong bài này, bạn sẽ học về:
-      - Media queries trong CSS
-      - Flexible grid system
-      - Mobile-first approach
-      - Breakpoints và cách sử dụng
-      - Testing trên nhiều thiết bị
-      
-      Kỹ thuật này rất quan trọng trong thời đại người dùng truy cập web từ nhiều thiết bị khác nhau.
-    `,
-        subject: "Thiết kế giao diện web",
-        createdAt: "2025-11-10T09:00:00Z",
-    },
-    {
-        _id: "s007",
-        title: "Bài học 7: Git và Version Control",
-        description: "Tìm hiểu cách quản lý phiên bản code với Git và GitHub.",
-        type: "text",
-        textContent: `
-      Git là hệ thống quản lý phiên bản phân tán, giúp bạn theo dõi mọi thay đổi trong dự án và làm việc nhóm hiệu quả.
-      
-      Nội dung bài học bao gồm:
-      - Khái niệm về Version Control
-      - Cài đặt và cấu hình Git
-      - Các lệnh cơ bản: init, add, commit, push, pull
-      - Branch và Merge
-      - GitHub và cách sử dụng
-      - Best practices khi làm việc với Git
-      
-      Đây là kỹ năng cần thiết cho mọi lập trình viên, giúp bạn quản lý code chuyên nghiệp và cộng tác tốt hơn.
-    `,
-        subject: "Công cụ phát triển",
-        createdAt: "2025-11-12T10:30:00Z",
-    },
-    {
-        _id: "s008",
-        title: "Bài học 8: RESTful API và JSON",
-        description: "Học cách xây dựng và sử dụng API để giao tiếp giữa các ứng dụng.",
-        type: "text",
-        textContent: `
-      API (Application Programming Interface) là giao diện cho phép các ứng dụng giao tiếp với nhau. RESTful API là một kiến trúc phổ biến sử dụng HTTP protocol.
-      
-      Trong bài học này, bạn sẽ tìm hiểu:
-      - Khái niệm về API và REST
-      - HTTP methods: GET, POST, PUT, DELETE
-      - JSON format và cách parse
-      - Status codes và ý nghĩa
-      - Cách gọi API từ JavaScript (fetch, axios)
-      - Xử lý lỗi và async/await
-      - Best practices khi thiết kế API
-      
-      Kiến thức này rất quan trọng để xây dựng ứng dụng web hiện đại, kết nối frontend với backend.
-    `,
-        subject: "Lập trình Web nâng cao",
-        createdAt: "2025-11-15T14:00:00Z",
-    },
-    {
-        _id: "s009",
-        title: "Bài học 9: Database và SQL cơ bản",
-        description: "Tìm hiểu cách lưu trữ và truy vấn dữ liệu với database.",
-        type: "text",
-        textContent: `
-      Database là nơi lưu trữ dữ liệu có cấu trúc, giúp ứng dụng quản lý thông tin một cách hiệu quả. SQL là ngôn ngữ để tương tác với database.
-      
-      Nội dung bài học:
-      - Khái niệm về Database và DBMS
-      - Các loại database: SQL vs NoSQL
-      - Cấu trúc bảng, cột, hàng
-      - Các lệnh SQL cơ bản: SELECT, INSERT, UPDATE, DELETE
-      - WHERE clause và điều kiện
-      - JOIN để kết hợp dữ liệu từ nhiều bảng
-      - Index và tối ưu hóa truy vấn
-      
-      Hiểu về database là nền tảng để xây dựng ứng dụng có thể lưu trữ và quản lý dữ liệu người dùng.
-    `,
-        subject: "Cơ sở dữ liệu",
-        createdAt: "2025-11-18T11:00:00Z",
-    },
-    {
-        _id: "s010",
-        title: "Bài học 10: Security và Authentication",
-        description: "Học cách bảo vệ ứng dụng và xác thực người dùng.",
-        type: "text",
-        textContent: `
-      Security là yếu tố quan trọng trong phát triển web. Bạn cần hiểu cách bảo vệ ứng dụng và dữ liệu người dùng khỏi các mối đe dọa.
-      
-      Bài học bao gồm:
-      - Các lỗ hổng bảo mật phổ biến: XSS, SQL Injection, CSRF
-      - Authentication vs Authorization
-      - Password hashing và encryption
-      - JWT (JSON Web Tokens)
-      - Session management
-      - HTTPS và SSL/TLS
-      - Best practices về bảo mật
-      
-      Kiến thức này giúp bạn xây dựng ứng dụng an toàn, bảo vệ thông tin người dùng và tuân thủ các tiêu chuẩn bảo mật.
-    `,
-        subject: "Bảo mật ứng dụng",
-        createdAt: "2025-11-20T15:30:00Z",
-    },
-];
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card"
+import { Button } from "@/shared/ui/button"
+import { Badge } from "@/shared/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs"
+import { ScrollArea } from "@/shared/ui/scroll-area"
+import { Textarea } from "@/shared/ui/textarea"
+import {
+  ArrowLeft,
+  Volume2,
+  VolumeX,
+  MessageSquare,
+  Download,
+  CheckCircle,
+  BookOpen,
+  Mic,
+  Play,
+  FileText,
+  Lightbulb,
+  Languages,
+  FileQuestion,
+  ChevronRight,
+  Sparkles,
+  BookMarked,
+  PenTool,
+  RefreshCw,
+  ExternalLink,
+  CheckSquare,
+  Edit3,
+  Video,
+  Headphones,
+  Lock,
+} from "lucide-react"
+import StudentChat from "@/features/main/components/Translator/components/StudentChat"
+import { getLessonById, Lesson as ApiLesson } from "@/apis/lessonApi"
+import { speak, stopSpeech } from "@/shared/lib/text-to-speech"
 
-export default async function LessonDetailPage({
-    params
-}: {
-    params: Promise<{ id: string; sessionId: string }> | { id: string; sessionId: string }
-}) {
-    const resolvedParams = await params;
-    const session = mockSessions[Math.floor(Math.random() * mockSessions.length)];
+interface PageProps {
+  params: Promise<{ id: string; sessionId: string }> | { id: string; sessionId: string }
+}
 
+interface LessonMaterial {
+  id: string
+  title: string
+  type: string
+  url?: string
+  size?: string
+  downloadable: boolean
+}
+
+interface ChatMessage {
+  id: string
+  role: "user" | "assistant"
+  content: string
+  timestamp: Date
+}
+
+export default function LessonDetailPage({ params }: PageProps) {
+  const [subjectId, setSubjectId] = useState<string>("")
+  const [sessionId, setSessionId] = useState<string>("")
+  const [lesson, setLesson] = useState<ApiLesson | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [chatInput, setChatInput] = useState("")
+  const [chatMode, setChatMode] = useState<"simple" | "full">("simple")
+  const [isSendingChat, setIsSendingChat] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  // const resolvedParams = await params;
+  // const session = mockSessions[Math.floor(Math.random() * mockSessions.length)];
+
+  useEffect(() => {
+    const resolveParams = async () => {
+      const resolved = await params
+      setSubjectId(resolved.id)
+      setSessionId(resolved.sessionId)
+    }
+    resolveParams()
+  }, [params])
+
+  useEffect(() => {
+    if (sessionId) {
+      loadLessonData()
+    }
+  }, [sessionId])
+
+  const loadLessonData = async () => {
+    setLoading(true)
+    try {
+      const apiLesson = await getLessonById(sessionId)
+      setLesson(apiLesson)
+
+      // Set first material as selected
+      if (apiLesson.resources && apiLesson.resources.length > 0) {
+        setSelectedMaterial(apiLesson.resources[0]._id)
+      }
+    } catch (error) {
+      console.error("Error loading lesson:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Transform resources to materials
+  const materials: LessonMaterial[] = lesson?.resources.map((resource, idx) => {
+    const downloadable = resource.type !== "video" && resource.type !== "audio"
+
+    return {
+      id: resource._id || `material-${idx}`,
+      title: resource.type === "video"
+        ? "Video bài giảng"
+        : resource.type === "audio"
+          ? "Audio giải thích"
+          : resource.type === "document"
+            ? "Tài liệu học tập"
+            : "Tài liệu",
+      type: resource.type,
+      url: resource.url,
+      downloadable,
+    }
+  }) || []
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "video":
+        return <Video className="h-4 w-4" />
+      case "audio":
+        return <Headphones className="h-4 w-4" />
+      case "document":
+        return <FileText className="h-4 w-4" />
+      default:
+        return <BookOpen className="h-4 w-4" />
+    }
+  }
+
+  const getLessonType = (): string => {
+    if (!lesson?.resources || lesson.resources.length === 0) return "text"
+
+    const hasVideo = lesson.resources.some(r => r.type === "video")
+    if (hasVideo) return "video"
+
+    const hasAudio = lesson.resources.some(r => r.type === "audio")
+    if (hasAudio) return "audio"
+
+    const hasDocument = lesson.resources.some(r => r.type === "document")
+    if (hasDocument) return "document"
+
+    return "text"
+  }
+
+  const handleReadContent = () => {
+    if (isSpeaking) {
+      stopSpeech()
+      setIsSpeaking(false)
+    } else if (lesson?.description) {
+      speak(
+        lesson.description,
+        "vi-VN",
+        () => setIsSpeaking(true),
+        () => setIsSpeaking(false)
+      )
+    }
+  }
+
+  const handleSendChat = async () => {
+    if (!chatInput.trim() || isSendingChat) return
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: "user",
+      content: chatInput,
+      timestamp: new Date(),
+    }
+
+    setChatMessages((prev) => [...prev, userMessage])
+    setChatInput("")
+    setIsSendingChat(true)
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: chatInput,
+          mode: chatMode,
+          context: {
+            lessonId: lesson?._id,
+            lessonTitle: lesson?.title || lesson?.name,
+            lessonDescription: lesson?.description,
+          },
+        }),
+      })
+
+      const data = await response.json()
+
+      const aiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: data.reply_text || data.text || "Xin lỗi, tôi không thể trả lời câu hỏi này.",
+        timestamp: new Date(),
+      }
+
+      setChatMessages((prev) => [...prev, aiMessage])
+    } catch (error) {
+      console.error("Error sending chat:", error)
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.",
+        timestamp: new Date(),
+      }
+      setChatMessages((prev) => [...prev, errorMessage])
+    } finally {
+      setIsSendingChat(false)
+    }
+  }
+
+  const handleCompleteLesson = async () => {
+    if (!lesson) return
+
+    try {
+      // Update lesson completion status
+      await fetch(`/api/lessons/${lesson._id}/complete`, {
+        method: "POST",
+      })
+      // Note: In a real app, you'd update the lesson state here
+    } catch (error) {
+      console.error("Error completing lesson:", error)
+    }
+  }
+
+  if (loading) {
     return (
-        <div className="p-6 mx-auto grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6">
-            <div className="space-y-6">
-                <Card className="overflow-hidden">
-                    <CardHeader>
-                        <CardTitle className="text-2xl font-bold">{session.title}</CardTitle>
-                    </CardHeader>
-
-                    <CardContent className="space-y-4">
-                        <p className="text-muted-foreground">{session.description}</p>
-
-                        {session.type === "video" ? (
-                            <div className="relative w-full">
-                                <video
-                                    controls
-                                    className="w-full rounded-lg shadow-md"
-                                    src={session.contentUrl}
-                                />
-                            </div>
-                        ) : (
-                            <TextContentReader textContent={session.textContent} />
-                        )}
-
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
-                            <BookOpen className="h-4 w-4" />
-                            <span>{session.subject}</span>
-                            <span>•</span>
-                            <span>
-                                {new Date(session.createdAt).toLocaleDateString("vi-VN", {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                })}
-                            </span>
-                        </div>
-
-                        <div className="pt-4">
-                            <Button
-                                size="sm"
-                                className="bg-blue-500 hover:bg-blue-600 text-white"
-                            >
-                                {session.type === "video" ? "▶️ Xem lại bài học" : "📖 Đọc thêm"}
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <FileText className="h-5 w-5" /> Tài liệu bổ sung
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ul className="list-disc ml-6 text-sm text-muted-foreground">
-                            <li>
-                                <a href="#" className="text-blue-600 hover:underline">
-                                    Slide bài học {session.title}
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" className="text-blue-600 hover:underline">
-                                    File ví dụ thực hành
-                                </a>
-                            </li>
-                        </ul>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="">
-                <StudentChat
-                    sessionId={resolvedParams.sessionId}
-                    key={resolvedParams.sessionId} // Force re-render when sessionId changes
-                />
-            </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
+          <p className="mt-2 text-muted-foreground">Đang tải bài học...</p>
         </div>
-    );
+      </div>
+    )
+  }
+
+  if (!lesson) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="p-8 text-center">
+          <h3 className="text-lg font-semibold">Không tìm thấy bài học</h3>
+          <Link href={`/subject/${subjectId}`}>
+            <Button className="mt-4">Quay lại môn học</Button>
+          </Link>
+        </Card>
+      </div>
+    )
+  }
+
+  const lessonType = getLessonType()
+  const lessonTitle = lesson.title || lesson.name || "Bài học không có tiêu đề"
+  const currentMaterial = materials.find((m) => m.id === selectedMaterial)
+
+  return (
+    <div className="">
+      <div className=" p-10 mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <Link href={`/subject/${subjectId}`}>
+            <Button variant="ghost" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Quay lại môn học
+            </Button>
+          </Link>
+
+          {!lesson.status && (
+            <Button onClick={handleCompleteLesson} className="gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Đánh dấu hoàn thành
+            </Button>
+          )}
+        </div>
+
+        {/* Main Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <CardTitle className="text-2xl mb-2">{lessonTitle}</CardTitle>
+                    <CardDescription>{lesson.description}</CardDescription>
+                  </div>
+                  {lesson.status && (
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                      Đã hoàn thành
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+            </Card>
+
+            {materials.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Tài liệu học tập</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Tabs value={selectedMaterial || undefined} onValueChange={setSelectedMaterial}>
+                    <TabsList className="w-full justify-start overflow-x-auto">
+                      {materials.map((material) => (
+                        <TabsTrigger key={material.id} value={material.id} className="gap-2">
+                          {getTypeIcon(material.type)}
+                          {material.title}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+
+                    {materials.map((material) => (
+                      <TabsContent key={material.id} value={material.id} className="mt-4">
+                        <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                          {material.type === "video" ? (
+                            <video
+                              controls
+                              className="w-full h-full object-cover"
+                              src={material.url}
+                            />
+                          ) : material.type === "audio" ? (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="text-center">
+                                <Headphones className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                                <audio controls className="w-full max-w-md">
+                                  <source src={material.url} />
+                                </audio>
+                                <p className="font-medium mt-4">{material.title}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="text-center">
+                                <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                                <p className="font-medium mb-2">{material.title}</p>
+                                {material.size && (
+                                  <p className="text-sm text-muted-foreground mb-4">{material.size}</p>
+                                )}
+                                {material.downloadable && material.url && (
+                                  <Button variant="outline" className="gap-2 bg-transparent" asChild>
+                                    <a href={material.url} download>
+                                      <Download className="h-4 w-4" />
+                                      Tải xuống
+                                    </a>
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+                    ))}
+                  </Tabs>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    Nội dung bài học
+                  </CardTitle>
+                  <Button variant="outline" size="sm" onClick={handleReadContent} className="gap-2 bg-transparent">
+                    {isSpeaking ? (
+                      <>
+                        <VolumeX className="h-4 w-4" />
+                        Dừng đọc
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="h-4 w-4" />
+                        Đọc nội dung
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* <ScrollArea className="h-[600px] pr-4">
+                                    <div
+                                        className="prose dark:prose-invert max-w-none"
+                                        style={{
+                                            fontSize: `${settings.fontSize === "small" ? "0.875" : settings.fontSize === "large" ? "1.125" : settings.fontSize === "xlarge" ? "1.25" : "1"}rem`,
+                                        }}
+                                        dangerouslySetInnerHTML={{
+                                            __html: lesson.content.replace(/\n/g, "<br>"),
+                                        }}
+                                    />
+                                </ScrollArea> */}
+              </CardContent>
+            </Card>
+          </div>
+
+
+          <div className="space-y-6">
+            {/* AI Chat */}
+            <Card className="sticky top-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Trợ lý AI
+                </CardTitle>
+                <CardDescription>Hỏi bất kỳ câu hỏi nào về bài học</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Chat Mode */}
+                <div className="flex gap-2">
+                  <Button
+                    variant={chatMode === "simple" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setChatMode("simple")}
+                    className="flex-1"
+                  >
+                    Đơn giản
+                  </Button>
+                  <Button
+                    variant={chatMode === "full" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setChatMode("full")}
+                    className="flex-1"
+                  >
+                    Chi tiết
+                  </Button>
+                </div>
+
+                {/* Chat Messages */}
+                <ScrollArea className="h-[300px] border rounded-lg p-4">
+                  {chatMessages.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">Bắt đầu hỏi AI về bài học</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {chatMessages.map((msg) => (
+                        <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                          <div
+                            className={`max-w-[85%] rounded-lg p-3 ${msg.role === "user" ? "bg-blue-500 text-white" : "bg-muted"
+                              }`}
+                          >
+                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            <p className="text-xs opacity-70 mt-1">
+                              {msg.timestamp.toLocaleTimeString("vi-VN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      {isSendingChat && (
+                        <div className="flex justify-start">
+                          <div className="bg-muted rounded-lg p-3">
+                            <div className="flex gap-1">
+                              <div
+                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                                style={{ animationDelay: "0ms" }}
+                              />
+                              <div
+                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                                style={{ animationDelay: "150ms" }}
+                              />
+                              <div
+                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                                style={{ animationDelay: "300ms" }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </ScrollArea>
+
+                {/* Chat Input */}
+                <div className="space-y-2">
+                  <Textarea
+                    placeholder="Nhập câu hỏi của bạn..."
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault()
+                        handleSendChat()
+                      }
+                    }}
+                    rows={3}
+                  />
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setIsRecording(!isRecording)} className="gap-2 bg-transparent">
+                      <Mic className={`h-4 w-4 ${isRecording ? "text-red-500 animate-pulse" : ""}`} />
+                      {isRecording ? "Đang ghi..." : "Ghi âm"}
+                    </Button>
+                    <Button
+                      onClick={handleSendChat}
+                      disabled={!chatInput.trim() || isSendingChat}
+                      className="flex-1 gap-2"
+                    >
+                      Gửi
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+
+
+            {/* Quick AI Tools */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Công cụ AI nhanh</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2 bg-transparent"
+                  size="sm"
+                  onClick={() => setChatInput("Tóm tắt bài học này cho tôi")}
+                >
+                  <Lightbulb className="h-4 w-4" />
+                  Tóm tắt bài học
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2 bg-transparent"
+                  size="sm"
+                  onClick={() => setChatInput("Giải thích các từ khó trong bài học này")}
+                >
+                  <Languages className="h-4 w-4" />
+                  Giải thích từ khó
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2 bg-transparent"
+                  size="sm"
+                  onClick={() => setChatInput("Tạo câu hỏi ôn tập cho bài học này")}
+                >
+                  <FileQuestion className="h-4 w-4" />
+                  Tạo câu hỏi ôn tập
+                </Button>
+              </CardContent>
+            </Card>
+            <div className="sticky top-6">
+              <div className=" overflow-hidden">
+                <StudentChat
+                  sessionId={sessionId}
+                  key={sessionId}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  )
 }

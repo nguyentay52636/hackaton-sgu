@@ -101,3 +101,39 @@ export interface LearningStats {
   achievements: string[];
   weeklyActivity: { day: string; minutes: number }[];
 }
+export interface Subject {
+  id: string
+  code: string
+  name: string
+  description: string
+  teacherId: string
+  teacherName: string
+  credits: number
+  semester: string
+  coverImage?: string
+  progress: number
+  enrolledAt: Date
+}
+export interface SessionMessage {
+  id: string
+  sessionId: string
+  role: "user" | "assistant"
+  content: string
+  mode?: ChatMode
+  timestamp: Date
+}
+
+export interface Session {
+  _id: string
+  title: string
+  description: string
+  type: "video" | "audio" | "text" | "pdf"
+  language: "vi" | "en"
+  contentUrl: string
+  textContent: string
+  subtitles: string
+  subject: string // Subject ID reference
+  sessionsMessages: SessionMessage[]
+  createdAt: Date
+  updatedAt: Date
+}
